@@ -12,25 +12,35 @@ import (
 	"strings"
 )
 
-type UploadReponse struct {
-	Skylink string `json:"skylink"`
-}
+type (
+	UploadReponse struct {
+		Skylink string `json:"skylink"`
+	}
 
-type UploadOptions struct {
-	portalUrl           string
-	portalUploadPath    string
-	portalFileFieldname string
-	customFilename      string
-	tryParseResponse    bool
-}
+	UploadOptions struct {
+		portalUrl           string
+		portalUploadPath    string
+		portalFileFieldname string
+		customFilename      string
+	}
 
-var DefaultUploadOptions = UploadOptions{
-	portalUrl:           "https://siasky.net/",
-	portalUploadPath:    "/api/skyfile",
-	portalFileFieldname: "file",
-	customFilename:      "",
-	tryParseResponse:    true,
-}
+	DownloadOptions struct {
+		portalUrl string
+	}
+)
+
+var (
+	DefaultUploadOptions = UploadOptions{
+		portalUrl:           "https://siasky.net/",
+		portalUploadPath:    "/api/skyfile",
+		portalFileFieldname: "file",
+		customFilename:      "",
+	}
+
+	DefaultDownloadOptions = DownloadOptions{
+		portalUrl: "https://siasky.net/",
+	}
+)
 
 func UploadFile(path string, opts UploadOptions) (string, error) {
 	// open the file
@@ -87,15 +97,28 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 	}
 	resp.Body.Close()
 
-	if !opts.tryParseResponse {
-		return body.String(), nil
-	}
-
 	var apiResponse UploadReponse
 	err = json.Unmarshal(body.Bytes(), &apiResponse)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s/%s\n", strings.TrimRight(opts.portalUrl, "/"), apiResponse.Skylink), nil
+	return apiResponse.Skylink, nil
+}
+
+func DownloadFile(path, skylink string, opts DownloadOptions) error {
+	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), skylink))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
 }
