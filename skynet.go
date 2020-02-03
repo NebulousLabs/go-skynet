@@ -107,7 +107,7 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 }
 
 func DownloadFile(path, skylink string, opts DownloadOptions) error {
-	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.trimPrefix(skylink, "sia://")))
+	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimPrefix(skylink, "sia://")))
 	if err != nil {
 		return err
 	}
