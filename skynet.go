@@ -31,14 +31,14 @@ type (
 
 var (
 	DefaultUploadOptions = UploadOptions{
-		portalUrl:           "https://siasky.net/",
+		portalUrl:           "https://siasky.net",
 		portalUploadPath:    "/api/skyfile",
 		portalFileFieldname: "file",
 		customFilename:      "",
 	}
 
 	DefaultDownloadOptions = DownloadOptions{
-		portalUrl: "https://siasky.net/",
+		portalUrl: "https://siasky.net",
 	}
 )
 
@@ -103,11 +103,11 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 		return "", err
 	}
 
-	return apiResponse.Skylink, nil
+	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
 }
 
 func DownloadFile(path, skylink string, opts DownloadOptions) error {
-	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), skylink))
+	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.trimPrefix(skylink, "sia://")))
 	if err != nil {
 		return err
 	}
