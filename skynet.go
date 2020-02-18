@@ -2,6 +2,7 @@ package skynet
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,7 +33,7 @@ type (
 var (
 	DefaultUploadOptions = UploadOptions{
 		portalUrl:           "https://siasky.net",
-		portalUploadPath:    "/api/skyfile",
+		portalUploadPath:    "/skynet/skyfile",
 		portalFileFieldname: "file",
 		customFilename:      "",
 	}
@@ -75,7 +76,13 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 	}
 
 	// prepare the request
-	url := fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"))
+	id, err := generateUUID()
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("%s/%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"), id)
+
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	if err != nil {
@@ -121,4 +128,14 @@ func DownloadFile(path, skylink string, opts DownloadOptions) error {
 
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+func generateUUID() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", b), nil
 }
