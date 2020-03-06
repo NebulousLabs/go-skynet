@@ -2,7 +2,6 @@ package skynet
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -77,13 +76,7 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 		return "", err
 	}
 
-	// prepare the request
-	id, err := generateUUID()
-	if err != nil {
-		return "", err
-	}
-
-	url := fmt.Sprintf("%s/%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"), id)
+	url := fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"))
 
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -161,13 +154,7 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 		return "", err
 	}
 
-	// prepare the request
-	id, err := generateUUID()
-	if err != nil {
-		return "", err
-	}
-
-	url := fmt.Sprintf("%s/%s/%s?filename=%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"), id, filename)
+	url := fmt.Sprintf("%s/%s?filename=%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"), filename)
 
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -238,14 +225,4 @@ func walkDirectory(path string) ([]string, error) {
 		return []string{}, err
 	}
 	return files, nil
-}
-
-func generateUUID() (string, error) {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", b), nil
 }
