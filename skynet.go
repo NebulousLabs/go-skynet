@@ -177,12 +177,21 @@ func UploadDirectory(path string, opts FileUploadOptions) (string, error) {
 	return Upload(uploadData, opts.UploadOptions)
 }
 
-func DownloadFile(path, skylink string, opts DownloadOptions) error {
+func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
 	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimPrefix(skylink, "sia://")))
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body, nil
+}
+
+func DownloadFile(path, skylink string, opts DownloadOptions) error {
+	downloadData, err := Download(skylink, opts)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer downloadData.Close()
 
 	out, err := os.Create(path)
 	if err != nil {
@@ -190,7 +199,7 @@ func DownloadFile(path, skylink string, opts DownloadOptions) error {
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, resp.Body)
+	_, err = io.Copy(out, downloadData)
 	return err
 }
 
