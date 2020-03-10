@@ -3,6 +3,7 @@ package skynet
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -22,8 +23,16 @@ type (
 		portalUploadPath             string
 		portalFileFieldname          string
 		portalDirectoryFileFieldname string
-		customFilename               string
+		dirname                      string
 	}
+
+	FileUploadOptions struct {
+		UploadOptions
+		customFilename string
+	}
+
+	// keys are filenames
+	UploadData map[string]io.Reader
 
 	DownloadOptions struct {
 		portalUrl string
@@ -31,12 +40,14 @@ type (
 )
 
 var (
-	DefaultUploadOptions = UploadOptions{
-		portalUrl:                    "https://siasky.net",
-		portalUploadPath:             "/skynet/skyfile",
-		portalFileFieldname:          "file",
-		portalDirectoryFileFieldname: "files[]",
-		customFilename:               "",
+	DefaultUploadOptions = FileUploadOptions{
+		UploadOptions: UploadOptions{
+			portalUrl:                    "https://siasky.net",
+			portalUploadPath:             "/skynet/skyfile",
+			portalFileFieldname:          "file",
+			portalDirectoryFileFieldname: "files[]",
+		},
+		customFilename: "",
 	}
 
 	DefaultDownloadOptions = DownloadOptions{
@@ -44,39 +55,39 @@ var (
 	}
 )
 
-func UploadFile(path string, opts UploadOptions) (string, error) {
-	// open the file
-	file, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	// set filename
-	var filename string
-	if opts.customFilename != "" {
-		filename = opts.customFilename
-	} else {
-		filename = filepath.Base(path)
-	}
-
+func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	// prepare formdata
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(opts.portalFileFieldname, filename)
-	if err != nil {
-		return "", err
-	}
-	_, err = io.Copy(part, file)
-	if err != nil {
-		return "", err
-	}
-	err = writer.Close()
-	if err != nil {
-		return "", err
-	}
 
 	url := fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"))
+
+	var fieldname string
+	if len(uploadData) == 1 {
+		fieldname = opts.portalFileFieldname
+	} else {
+		if opts.dirname == "" {
+			return "", errors.New("dirname must be set when uploading multiple files")
+		}
+		fieldname = opts.portalDirectoryFileFieldname
+		url = fmt.Sprintf("%s?filename=%s", url, opts.dirname)
+	}
+
+	for filename, data := range uploadData {
+		part, err := writer.CreateFormFile(fieldname, filename)
+		if err != nil {
+			return "", err
+		}
+		_, err = io.Copy(part, data)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	err := writer.Close()
+	if err != nil {
+		return "", err
+	}
 
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -108,7 +119,29 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
 }
 
-func UploadDirectory(path string, opts UploadOptions) (string, error) {
+func UploadFile(path string, opts FileUploadOptions) (string, error) {
+	// open the file
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	// set filename
+	var filename string
+	if opts.customFilename != "" {
+		filename = opts.customFilename
+	} else {
+		filename = filepath.Base(path)
+	}
+
+	uploadData := make(UploadData)
+	uploadData[filename] = file
+
+	return Upload(uploadData, opts.UploadOptions)
+}
+
+func UploadDirectory(path string, opts FileUploadOptions) (string, error) {
 	// verify the given path is a directory
 	info, err := os.Stat(path)
 	if err != nil {
@@ -124,66 +157,24 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 		return "", err
 	}
 
-	// set filename
-	var filename string
+	// set dirname
 	if opts.customFilename != "" {
-		filename = opts.customFilename
+		opts.dirname = opts.customFilename
 	} else {
-		filename = filepath.Base(path)
+		opts.dirname = filepath.Base(path)
 	}
 
 	// prepare formdata
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	for _, filepath := range files {
-		file, err := os.Open(filepath)
+	uploadData := make(UploadData)
+	for _, fp := range files {
+		file, err := os.Open(fp)
 		if err != nil {
 			return "", err
 		}
-		part, err := writer.CreateFormFile(opts.portalDirectoryFileFieldname, filepath)
-		if err != nil {
-			return "", err
-		}
-		_, err = io.Copy(part, file)
-		if err != nil {
-			return "", err
-		}
-	}
-	err = writer.Close()
-	if err != nil {
-		return "", err
+		uploadData[fp] = file
 	}
 
-	url := fmt.Sprintf("%s/%s?filename=%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimLeft(opts.portalUploadPath, "/"), filename)
-
-	req, err := http.NewRequest("POST", url, body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	if err != nil {
-		return "", err
-	}
-
-	// upload the file to skynet
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	// parse the response
-	body = &bytes.Buffer{}
-	_, err = body.ReadFrom(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	resp.Body.Close()
-
-	var apiResponse UploadReponse
-	err = json.Unmarshal(body.Bytes(), &apiResponse)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
+	return Upload(uploadData, opts.UploadOptions)
 }
 
 func DownloadFile(path, skylink string, opts DownloadOptions) error {
