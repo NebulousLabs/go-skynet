@@ -205,20 +205,11 @@ func DownloadFile(path, skylink string, opts DownloadOptions) error {
 
 func walkDirectory(path string) ([]string, error) {
 	var files []string
-	err := filepath.Walk(path, func(subpath string, info os.FileInfo, err error) error {
+	err := filepath.Walk(path, func(path string, _ os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		fullpath := filepath.Join(path, subpath)
-		if info.IsDir() {
-			subfiles, err := walkDirectory(fullpath)
-			if err != nil {
-				return err
-			}
-			files = append(files, subfiles...)
-			return nil
-		}
-		files = append(files, fullpath)
+		files = append(files, path)
 		return nil
 	})
 	if err != nil {
