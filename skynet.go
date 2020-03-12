@@ -23,12 +23,8 @@ type (
 		portalUploadPath             string
 		portalFileFieldname          string
 		portalDirectoryFileFieldname string
+		customFilename               string
 		dirname                      string
-	}
-
-	FileUploadOptions struct {
-		UploadOptions
-		customFilename string
 	}
 
 	// keys are filenames
@@ -40,14 +36,11 @@ type (
 )
 
 var (
-	DefaultUploadOptions = FileUploadOptions{
-		UploadOptions: UploadOptions{
-			portalUrl:                    "https://siasky.net",
-			portalUploadPath:             "/skynet/skyfile",
-			portalFileFieldname:          "file",
-			portalDirectoryFileFieldname: "files[]",
-		},
-		customFilename: "",
+	DefaultUploadOptions = UploadOptions{
+		portalUrl:                    "https://siasky.net",
+		portalUploadPath:             "/skynet/skyfile",
+		portalFileFieldname:          "file",
+		portalDirectoryFileFieldname: "files[]",
 	}
 
 	DefaultDownloadOptions = DownloadOptions{
@@ -119,7 +112,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
 }
 
-func UploadFile(path string, opts FileUploadOptions) (string, error) {
+func UploadFile(path string, opts UploadOptions) (string, error) {
 	// open the file
 	file, err := os.Open(path)
 	if err != nil {
@@ -138,10 +131,10 @@ func UploadFile(path string, opts FileUploadOptions) (string, error) {
 	uploadData := make(UploadData)
 	uploadData[filename] = file
 
-	return Upload(uploadData, opts.UploadOptions)
+	return Upload(uploadData, opts)
 }
 
-func UploadDirectory(path string, opts FileUploadOptions) (string, error) {
+func UploadDirectory(path string, opts UploadOptions) (string, error) {
 	// verify the given path is a directory
 	info, err := os.Stat(path)
 	if err != nil {
@@ -174,7 +167,7 @@ func UploadDirectory(path string, opts FileUploadOptions) (string, error) {
 		uploadData[fp] = file
 	}
 
-	return Upload(uploadData, opts.UploadOptions)
+	return Upload(uploadData, opts)
 }
 
 func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
