@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	gopath "path"
 	"path/filepath"
 	"strings"
 )
@@ -45,6 +46,8 @@ var (
 )
 
 func UploadFile(path string, opts UploadOptions) (string, error) {
+	path = gopath.Clean(path)
+
 	// open the file
 	file, err := os.Open(path)
 	if err != nil {
@@ -108,7 +111,10 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
 }
 
+// UploadDirectory uploads a local directory to Skynet.
 func UploadDirectory(path string, opts UploadOptions) (string, error) {
+	path = gopath.Clean(path)
+
 	// verify the given path is a directory
 	info, err := os.Stat(path)
 	if err != nil {
@@ -187,6 +193,8 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 }
 
 func DownloadFile(path, skylink string, opts DownloadOptions) error {
+	path = gopath.Clean(path)
+
 	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.portalUrl, "/"), strings.TrimPrefix(skylink, "sia://")))
 	if err != nil {
 		return err
@@ -206,19 +214,21 @@ func DownloadFile(path, skylink string, opts DownloadOptions) error {
 func walkDirectory(path string) ([]string, error) {
 	var files []string
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, err error) error {
+		if subpath == path {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
-		fullpath := filepath.Join(path, subpath)
 		if info.IsDir() {
-			subfiles, err := walkDirectory(fullpath)
+			subfiles, err := walkDirectory(subpath)
 			if err != nil {
 				return err
 			}
 			files = append(files, subfiles...)
 			return nil
 		}
-		files = append(files, fullpath)
+		files = append(files, subpath)
 		return nil
 	})
 	if err != nil {
