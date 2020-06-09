@@ -8,26 +8,29 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	gopath "path"
 	"path/filepath"
 	"strings"
+
+	"gitlab.com/NebulousLabs/errors"
 )
 
 type (
 	// UploadOptions contains the options used for uploads.
 	UploadOptions struct {
 		// PortalURL is the URL of the portal to use.
-		PortalURL                    string
+		PortalURL string
 		// PortalUploadPath is the path on the portal of the upload endpoint.
-		PortalUploadPath             string
+		PortalUploadPath string
 		// PortalFileFieldname is the fieldname for files on the portal.
-		PortalFileFieldname          string
+		PortalFileFieldname string
 		// PortalDirectoryFileFieldname is the fieldname for directory files on
 		// the portal.
 		PortalDirectoryFileFieldname string
 		// CustomFilename is the custom filename to use for the upload. If this
 		// is empty, the filename of the file being uploaded will be used by
 		// default.
-		CustomFilename               string
+		CustomFilename string
 	}
 
 	// DownloadOptions contains the options used for downloads.
@@ -60,13 +63,17 @@ var (
 )
 
 // UploadFile uploads a file to Skynet.
-func UploadFile(path string, opts UploadOptions) (string, error) {
+func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
+	path = gopath.Clean(path)
+
 	// open the file
-	file, err := os.Open(path)
+	file, err := os.Open(gopath.Clean(path))
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func() {
+		err = errors.Extend(err, file.Close())
+	}()
 
 	// set filename
 	var filename string
@@ -113,7 +120,10 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		return "", err
+	}
 
 	var apiResponse uploadResponse
 	err = json.Unmarshal(body.Bytes(), &apiResponse)
@@ -124,7 +134,10 @@ func UploadFile(path string, opts UploadOptions) (string, error) {
 	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
 }
 
+// UploadDirectory uploads a directory to Skynet.
 func UploadDirectory(path string, opts UploadOptions) (string, error) {
+	path = gopath.Clean(path)
+
 	// verify the given path is a directory
 	info, err := os.Stat(path)
 	if err != nil {
@@ -152,7 +165,7 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	for _, filepath := range files {
-		file, err := os.Open(filepath)
+		file, err := os.Open(gopath.Clean(filepath))
 		if err != nil {
 			return "", err
 		}
@@ -191,7 +204,10 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		return "", err
+	}
 
 	var apiResponse uploadResponse
 	err = json.Unmarshal(body.Bytes(), &apiResponse)
@@ -203,21 +219,27 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 }
 
 // DownloadFile downloads a file from Skynet.
-func DownloadFile(path, skylink string, opts DownloadOptions) error {
+func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
+	path = gopath.Clean(path)
+
 	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.PortalURL, "/"), strings.TrimPrefix(skylink, "sia://")))
 	if err != nil {
-		return err
+		return
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = errors.Extend(err, resp.Body.Close())
+	}()
 
 	out, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() {
+		err = errors.Extend(err, out.Close())
+	}()
 
 	_, err = io.Copy(out, resp.Body)
-	return err
+	return
 }
 
 // walkDirectory walks a given directory recursively, returning the paths of all
