@@ -16,49 +16,49 @@ import (
 )
 
 type (
-	// UploadOptions contains the options used for uploads.
-	UploadOptions struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
-		// PortalUploadPath is the path on the portal of the upload endpoint.
-		PortalUploadPath string
-		// PortalFileFieldname is the fieldname for files on the portal.
-		PortalFileFieldname string
-		// PortalDirectoryFileFieldname is the fieldname for directory files on
-		// the portal.
-		PortalDirectoryFileFieldname string
-		// CustomFilename is the custom filename to use for the upload. If this
-		// is empty, the filename of the file being uploaded will be used by
-		// default.
-		CustomFilename string
-	}
-
 	// DownloadOptions contains the options used for downloads.
 	DownloadOptions struct {
 		// PortalURL is the URL of the portal to use.
 		PortalURL string
 	}
 
-	// uploadResponse contains the response for uploads.
-	uploadResponse struct {
+	// UploadOptions contains the options used for uploads.
+	UploadOptions struct {
+		// PortalURL is the URL of the portal to use.
+		PortalURL string
+		// PortalUploadPath is the relative URL path of the upload endpoint.
+		PortalUploadPath string
+		// PortalFileFieldName is the fieldName for files on the portal.
+		PortalFileFieldName string
+		// PortalDirectoryFileFieldName is the fieldName for directory files on
+		// the portal.
+		PortalDirectoryFileFieldName string
+		// CustomFilename is the custom filename to use for the upload. If this
+		// is empty, the filename of the file being uploaded will be used by
+		// default.
+		CustomFilename string
+	}
+
+	// UploadResponse contains the response for uploads.
+	UploadResponse struct {
 		// Skylink is the returned skylink.
 		Skylink string `json:"skylink"`
 	}
 )
 
 var (
+	// DefaultDownloadOptions contains the default download options.
+	DefaultDownloadOptions = DownloadOptions{
+		PortalURL: "https://siasky.net",
+	}
+
 	// DefaultUploadOptions contains the default upload options.
 	DefaultUploadOptions = UploadOptions{
 		PortalURL:                    "https://siasky.net",
 		PortalUploadPath:             "/skynet/skyfile",
-		PortalFileFieldname:          "file",
-		PortalDirectoryFileFieldname: "files[]",
+		PortalFileFieldName:          "file",
+		PortalDirectoryFileFieldName: "files[]",
 		CustomFilename:               "",
-	}
-
-	// DefaultDownloadOptions contains the default download options.
-	DefaultDownloadOptions = DownloadOptions{
-		PortalURL: "https://siasky.net",
 	}
 )
 
@@ -67,7 +67,7 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	path = gopath.Clean(path)
 
 	// open the file
-	file, err := os.Open(gopath.Clean(path))
+	file, err := os.Open(gopath.Clean(path)) // Clean again to prevent lint error.
 	if err != nil {
 		return "", err
 	}
@@ -86,7 +86,7 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	// prepare formdata
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(opts.PortalFileFieldname, filename)
+	part, err := writer.CreateFormFile(opts.PortalFileFieldName, filename)
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +125,7 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 		return "", err
 	}
 
-	var apiResponse uploadResponse
+	var apiResponse UploadResponse
 	err = json.Unmarshal(body.Bytes(), &apiResponse)
 	if err != nil {
 		return "", err
@@ -165,11 +165,11 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	for _, filepath := range files {
-		file, err := os.Open(gopath.Clean(filepath))
+		file, err := os.Open(gopath.Clean(filepath)) // Clean again to prevent lint error.
 		if err != nil {
 			return "", err
 		}
-		part, err := writer.CreateFormFile(opts.PortalDirectoryFileFieldname, filepath)
+		part, err := writer.CreateFormFile(opts.PortalDirectoryFileFieldName, filepath)
 		if err != nil {
 			return "", err
 		}
@@ -209,7 +209,7 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 		return "", err
 	}
 
-	var apiResponse uploadResponse
+	var apiResponse UploadResponse
 	err = json.Unmarshal(body.Bytes(), &apiResponse)
 	if err != nil {
 		return "", err
