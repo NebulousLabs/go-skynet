@@ -134,7 +134,7 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
 }
 
-// UploadDirectory uploads a directory to Skynet.
+// UploadDirectory uploads a local directory to Skynet.
 func UploadDirectory(path string, opts UploadOptions) (string, error) {
 	path = gopath.Clean(path)
 
@@ -247,19 +247,21 @@ func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 func walkDirectory(path string) ([]string, error) {
 	var files []string
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, err error) error {
+		if subpath == path {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
-		fullpath := filepath.Join(path, subpath)
 		if info.IsDir() {
-			subfiles, err := walkDirectory(fullpath)
+			subfiles, err := walkDirectory(subpath)
 			if err != nil {
 				return err
 			}
 			files = append(files, subfiles...)
 			return nil
 		}
-		files = append(files, fullpath)
+		files = append(files, subpath)
 		return nil
 	})
 	if err != nil {
