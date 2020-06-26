@@ -19,7 +19,9 @@ cpkg = ./
 
 # pkgs changes which packages the makefile calls operate on. run changes which
 # tests are run during testing.
-pkgs = ./
+pkgs = \
+	./ \
+	./tests \
 
 # run determines which tests run when running any variation of 'make test'.
 run = .

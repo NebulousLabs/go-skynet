@@ -18,6 +18,8 @@ import (
 type (
 	// DownloadOptions contains the options used for downloads.
 	DownloadOptions struct {
+		// PortalDownloadPath is the relative URL path of the download endpoint.
+		PortalDownloadPath string
 		// PortalURL is the URL of the portal to use.
 		PortalURL string
 	}
@@ -46,10 +48,16 @@ type (
 	}
 )
 
+const (
+	// URISkynetPrefix is the URI prefix for Skynet.
+	URISkynetPrefix = "sia://"
+)
+
 var (
 	// DefaultDownloadOptions contains the default download options.
 	DefaultDownloadOptions = DownloadOptions{
-		PortalURL: "https://siasky.net",
+		PortalURL:          "https://siasky.net",
+		PortalDownloadPath: "/",
 	}
 
 	// DefaultUploadOptions contains the default upload options.
