@@ -179,7 +179,11 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 		}
 		// Remove the base path before uploading. Any ending '/' was removed
 		// from `path` with `Clean`.
-		filepath = strings.TrimPrefix(filepath, path+"/")
+		basepath := path
+		if basepath != "/" {
+			basepath += "/"
+		}
+		filepath = strings.TrimPrefix(filepath, basepath)
 		part, err := writer.CreateFormFile(opts.PortalDirectoryFileFieldName, filepath)
 		if err != nil {
 			return "", err
