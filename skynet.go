@@ -177,6 +177,9 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		// Remove the base path before uploading. Any ending '/' was removed
+		// from `path` with `Clean`.
+		filepath = strings.TrimPrefix(filepath, path+"/")
 		part, err := writer.CreateFormFile(opts.PortalDirectoryFileFieldName, filepath)
 		if err != nil {
 			return "", err
@@ -255,18 +258,13 @@ func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 func walkDirectory(path string) ([]string, error) {
 	var files []string
 	err := filepath.Walk(path, func(subpath string, info os.FileInfo, err error) error {
-		if subpath == path {
-			return nil
-		}
 		if err != nil {
 			return err
 		}
+		if subpath == path {
+			return nil
+		}
 		if info.IsDir() {
-			subfiles, err := walkDirectory(subpath)
-			if err != nil {
-				return err
-			}
-			files = append(files, subfiles...)
 			return nil
 		}
 		files = append(files, subpath)

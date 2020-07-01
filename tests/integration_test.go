@@ -127,18 +127,22 @@ func TestUploadDirectory(t *testing.T) {
 	print(interceptedRequest)
 
 	// Check that the request contained the files in `testdata/`.
-	if !strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"../testdata/file1.txt\"") {
+	if !strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"file1.txt\"") {
 		t.Fatal("expected request body to contain file1.txt")
 	}
-	if !strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"../testdata/file2.txt\"") {
+	if !strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"file2.txt\"") {
 		t.Fatal("expected request body to contain file2.txt")
 	}
-	if strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"../testdata/file0.txt\"") {
+	if !strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"dir1/file3.txt\"") {
+		t.Fatal("expected request body to contain dir1/file3.txt")
+	}
+	// The request should not contain a nonexistent file.
+	if strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"file0.txt\"") {
 		t.Fatal("did not expect request body to contain file0.txt")
 	}
 	count := strings.Count(interceptedRequest, "Content-Disposition")
-	if count != 2 {
-		t.Fatalf("expected %v files sent, got %v", 2, count)
+	if count != 3 {
+		t.Fatalf("expected %v files sent, got %v", 3, count)
 	}
 
 	if sialink2 != sialink {
