@@ -27,7 +27,7 @@ var (
 	interceptedRequest string
 )
 
-// TestUploadAndDownloadFile tests uploading and downloading a single file.
+// TestUploadAndDownloadFile tests uploading a single file.
 func TestUploadAndDownloadFile(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
@@ -41,8 +41,6 @@ func TestUploadAndDownloadFile(t *testing.T) {
 	if !os.IsNotExist(err) {
 		t.Fatalf("expected IsNotExist error, got %v", err)
 	}
-
-	// Test upload.
 
 	// Upload file request.
 	gock.New(skynet.DefaultUploadOptions.PortalURL).
@@ -58,7 +56,19 @@ func TestUploadAndDownloadFile(t *testing.T) {
 		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
 	}
 
-	// Test download.
+	// Verify we don't have pending mocks.
+	if !gock.IsDone() {
+		t.Fatal("test finished with pending mocks")
+	}
+}
+
+// TestDownloadFile tests downloading a single file.
+func TestDownloadFile(t *testing.T) {
+	defer gock.Off() // Flush pending mocks after test execution
+
+	const srcFile = "../testdata/file1.txt"
+	const skylink = "testskynet"
+	const sialink = skynet.URISkynetPrefix + skylink
 
 	file, err := ioutil.TempFile("", t.Name())
 	if err != nil {
@@ -123,8 +133,6 @@ func TestUploadDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	print(interceptedRequest)
 
 	// Check that the request contained the files in `testdata/`.
 	if !strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"files[]\"; filename=\"file1.txt\"") {
