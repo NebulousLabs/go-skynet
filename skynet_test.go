@@ -1,53 +1,29 @@
 package skynet
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
+// TestWalkDirectory tests directory walking.
 func TestWalkDirectory(t *testing.T) {
-	testDir, err := ioutil.TempDir("", "testWalkDir")
-	if err != nil {
-		t.Error(err)
-	}
-	defer os.RemoveAll(testDir)
-
-	subDir, err := ioutil.TempDir(testDir, "subDir")
-	if err != nil {
-		t.Error(err)
-	}
-
-	// lexical order to match filepath.Walk
-	testFiles := []string{
-		filepath.Join(testDir, "one"),
-		subDir,
-		filepath.Join(subDir, "foo"),
-		filepath.Join(testDir, "three"),
-		filepath.Join(testDir, "two"),
-	}
-
-	for i, f := range testFiles {
-		if i != 1 { // skip subDir which already exists
-			if err = ioutil.WriteFile(f, make([]byte, 0), 0666); err != nil {
-				t.Error(err)
-			}
-		}
-	}
+	const testDir = "testdata"
 
 	files, err := walkDirectory(testDir)
 	if err != nil {
 		t.Error(err)
 	}
+	expectedFiles := []string{
+		"testdata/dir1/file3.txt",
+		"testdata/file1.txt",
+		"testdata/file2.txt",
+	}
 
-	testFiles = append([]string{testDir}, testFiles...)
-	if len(files) != len(testFiles) {
-		t.Errorf("length %d of walked files != length %d of testFiles", len(files), len(testFiles))
+	if len(files) != len(expectedFiles) {
+		t.Errorf("expected %v files, got %v", len(expectedFiles), len(files))
 	}
 	for i, f := range files {
-		if f != testFiles[i] {
-			t.Errorf("file %s at index %d != testFile %s at same index", f, i, testFiles[i])
+		if f != expectedFiles[i] {
+			t.Errorf("file %s at index %d != expected file %s at same index", f, i, expectedFiles[i])
 		}
 	}
 }
