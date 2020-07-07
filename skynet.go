@@ -16,12 +16,38 @@ import (
 )
 
 type (
-	// DownloadOptions contains the options used for downloads.
-	DownloadOptions struct {
-		// PortalDownloadPath is the relative URL path of the download endpoint.
-		PortalDownloadPath string
+	// AddSkykeyOptions contains the options used for addskykey.
+	AddSkykeyOptions struct {
 		// PortalURL is the URL of the portal to use.
 		PortalURL string
+		// PortalAddSkykeyPath is the relative URL path of the addskykey
+		// endpoint.
+		PortalAddSkykeyPath string
+	}
+	CreateSkykeyOptions struct {
+		// PortalURL is the URL of the portal to use.
+		PortalURL string
+
+	}
+	GetSkykeyIdOptions struct {
+		// PortalURL is the URL of the portal to use.
+		PortalURL string
+	}
+	GetSkykeyOptions struct {
+		// PortalURL is the URL of the portal to use.
+		PortalURL string
+	}
+	ListSkykeysOptions struct {
+		// PortalURL is the URL of the portal to use.
+		PortalURL string
+	}
+
+	// DownloadOptions contains the options used for downloads.
+	DownloadOptions struct {
+		// PortalURL is the URL of the portal to use.
+		PortalURL string
+		// PortalDownloadPath is the relative URL path of the download endpoint.
+		PortalDownloadPath string
 	}
 
 	// UploadData contains data to upload, indexed by filenames.
@@ -57,25 +83,41 @@ type (
 )
 
 const (
+	// DefaultPortalURL is the default URL of the portal to use.
+	DefaultPortalURL = "https://siasky.net"
+
 	// URISkynetPrefix is the URI prefix for Skynet.
 	URISkynetPrefix = "sia://"
 )
 
 var (
+	// DefaultAddSkykeyOptions contains the default addskykey options.
+	DefaultAddSkykeyOptions = AddSkykeyOptions{
+		PortalURL: DefaultPortalURL,
+		PortalAddSkykeyPath: "/skynet/addskykey",
+	}
+
+
 	// DefaultDownloadOptions contains the default download options.
 	DefaultDownloadOptions = DownloadOptions{
-		PortalURL:          "https://siasky.net",
+		PortalURL:          DefaultPortalURL,
 		PortalDownloadPath: "/",
 	}
 
 	// DefaultUploadOptions contains the default upload options.
 	DefaultUploadOptions = UploadOptions{
-		PortalURL:                    "https://siasky.net",
+		PortalURL:                    DefaultPortalURL,
 		PortalUploadPath:             "/skynet/skyfile",
 		PortalFileFieldName:          "file",
 		PortalDirectoryFileFieldName: "files[]",
 	}
 )
+
+// AddSkykey stores the given base-64 encoded skykey with the renter's skykey
+// manager.
+func AddSkykey(skykey string, opts AddSkykeyOptions) error {
+	url := makeURL(opts.PortalURL, opts.PortalAddSkykeyPath)
+}
 
 // Upload uploads the given generic data.
 func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
@@ -83,7 +125,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	url := fmt.Sprintf("%s/%s", strings.TrimRight(opts.PortalURL, "/"), strings.TrimLeft(opts.PortalUploadPath, "/"))
+	url := makeURL(opts.PortalURL, opts.PortalUploadPath)
 
 	var fieldname string
 	if len(uploadData) == 1 {
@@ -216,7 +258,8 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 
 // Download downloads generic data.
 func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/%s", strings.TrimRight(opts.PortalURL, "/"), strings.TrimPrefix(skylink, "sia://")))
+	url := makeURL(opts.PortalURL, opts.PortalDownloadPath) + "/" + strings.TrimPrefix(skylink, "sia://")
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -247,6 +290,11 @@ func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 
 	_, err = io.Copy(out, downloadData)
 	return err
+}
+
+// makeURL makes a URL from the given parts.
+func makeURL(portalURL, portalPath string) string {
+	return fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(portalPath, "/"))
 }
 
 // walkDirectory walks a given directory recursively, returning the paths of all
