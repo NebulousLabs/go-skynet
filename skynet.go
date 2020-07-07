@@ -38,12 +38,15 @@ type (
 		// PortalDirectoryFileFieldName is the fieldName for directory files on
 		// the portal.
 		PortalDirectoryFileFieldName string
+
 		// CustomFilename is the custom filename to use for the upload. If this
 		// is empty, the filename of the file being uploaded will be used by
 		// default.
 		CustomFilename string
-		// DirName is the name of the directory, if uploading a directory.
-		DirName string
+		// CustomDirname is the custom name of the directory. If this is empty,
+		// the base name of the directory being uploaded will be used by
+		// default.
+		CustomDirname string
 	}
 
 	// UploadResponse contains the response for uploads.
@@ -86,11 +89,11 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	if len(uploadData) == 1 {
 		fieldname = opts.PortalFileFieldName
 	} else {
-		if opts.DirName == "" {
-			return "", errors.New("DirName must be set when uploading multiple files")
+		if opts.CustomDirname == "" {
+			return "", errors.New("CustomDirname must be set when uploading multiple files")
 		}
 		fieldname = opts.PortalDirectoryFileFieldName
-		url = fmt.Sprintf("%s?filename=%s", url, opts.DirName)
+		url = fmt.Sprintf("%s?filename=%s", url, opts.CustomDirname)
 	}
 
 	for filename, data := range uploadData {
@@ -146,7 +149,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	path = gopath.Clean(path)
 
-	// open the file
+	// Open the file.
 	file, err := os.Open(gopath.Clean(path)) // Clean again to prevent lint error.
 	if err != nil {
 		return "", err
@@ -155,12 +158,10 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 		err = errors.Extend(err, file.Close())
 	}()
 
-	// set filename
-	var filename string
+	// Set filename.
+	filename := filepath.Base(path)
 	if opts.CustomFilename != "" {
 		filename = opts.CustomFilename
-	} else {
-		filename = filepath.Base(path)
 	}
 
 	uploadData := make(UploadData)
@@ -173,7 +174,7 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 func UploadDirectory(path string, opts UploadOptions) (string, error) {
 	path = gopath.Clean(path)
 
-	// verify the given path is a directory
+	// Verify the given path is a directory.
 	info, err := os.Stat(path)
 	if err != nil {
 		return "", errors.AddContext(err, "error retrieving path info")
@@ -182,17 +183,15 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 		return "", fmt.Errorf("given path %v is not a directory", path)
 	}
 
-	// find all files in the given directory
+	// Find all files in the given directory.
 	files, err := walkDirectory(path)
 	if err != nil {
 		return "", errors.AddContext(err, "error walking directory")
 	}
 
-	// set DirName
-	if opts.CustomFilename != "" {
-		opts.DirName = opts.CustomFilename
-	} else {
-		opts.DirName = filepath.Base(path)
+	// Set DirName.
+	if opts.CustomDirname == "" {
+		opts.CustomDirname = filepath.Base(path)
 	}
 
 	// prepare formdata
