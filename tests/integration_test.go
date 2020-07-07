@@ -27,9 +27,10 @@ var (
 	interceptedRequest string
 )
 
-// TestUploadAndDownloadFile tests uploading a single file.
-func TestUploadAndDownloadFile(t *testing.T) {
+// TestUploadFile tests uploading a single file.
+func TestUploadFile(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
+	gock.Observe(interceptRequest)
 
 	const srcFile = "../testdata/file1.txt"
 	const skylink = "testskynet"
@@ -41,6 +42,8 @@ func TestUploadAndDownloadFile(t *testing.T) {
 	if !os.IsNotExist(err) {
 		t.Fatalf("expected IsNotExist error, got %v", err)
 	}
+
+	// Test uploading a file.
 
 	// Upload file request.
 	gock.New(skynet.DefaultUploadOptions.PortalURL).
@@ -54,6 +57,33 @@ func TestUploadAndDownloadFile(t *testing.T) {
 	}
 	if sialink2 != sialink {
 		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Test uploading a file with a custom filename.
+
+	interceptedRequest = ""
+
+	gock.New(skynet.DefaultUploadOptions.PortalURL).
+		Post(skynet.DefaultUploadOptions.PortalUploadPath).
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	opts := skynet.DefaultUploadOptions
+	opts.CustomFilename = "foobar"
+	sialink2, err = skynet.UploadFile(srcFile, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	if !strings.Contains(interceptedRequest, "Content-Disposition: form-data; name=\"file\"; filename=\"foobar\"") {
+		t.Fatal("expected request body to contain foobar")
+	}
+	count := strings.Count(interceptedRequest, "Content-Disposition")
+	if count != 1 {
+		t.Fatalf("expected %v files sent, got %v", 1, count)
 	}
 
 	// Verify we don't have pending mocks.
@@ -121,6 +151,8 @@ func TestUploadDirectory(t *testing.T) {
 
 	filename := filepath.Base(srcDir)
 
+	// Upload a directory.
+
 	gock.New(skynet.DefaultUploadOptions.PortalURL).
 		Post(skynet.DefaultUploadOptions.PortalUploadPath).
 		MatchParam("filename", filename).
@@ -149,6 +181,33 @@ func TestUploadDirectory(t *testing.T) {
 		t.Fatal("did not expect request body to contain file0.txt")
 	}
 	count := strings.Count(interceptedRequest, "Content-Disposition")
+	if count != 3 {
+		t.Fatalf("expected %v files sent, got %v", 3, count)
+	}
+
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Upload a directory with a custom dirname.
+
+	gock.New(skynet.DefaultUploadOptions.PortalURL).
+		Post(skynet.DefaultUploadOptions.PortalUploadPath).
+		MatchParam("filename", "barfoo").
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	interceptedRequest = ""
+
+	opts := skynet.DefaultUploadOptions
+	opts.CustomDirname = "barfoo"
+
+	sialink2, err = skynet.UploadDirectory(srcDir, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count = strings.Count(interceptedRequest, "Content-Disposition")
 	if count != 3 {
 		t.Fatalf("expected %v files sent, got %v", 3, count)
 	}
