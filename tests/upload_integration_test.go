@@ -12,7 +12,6 @@ import (
 // TestUploadFile tests uploading a single file.
 func TestUploadFile(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
-	gock.Observe(interceptRequest)
 
 	const srcFile = "../testdata/file1.txt"
 	const skylink = "testskynet"
@@ -42,17 +41,34 @@ func TestUploadFile(t *testing.T) {
 		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
 	}
 
+	// Verify we don't have pending mocks.
+	if !gock.IsDone() {
+		t.Fatal("test finished with pending mocks")
+	}
+}
+
+// TestUploadFileCustomName tests uploading a single file with a custom
+// filename.
+func TestUploadFileCustomName(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(interceptRequest)
+
+	const srcFile = "../testdata/file1.txt"
+	const skylink = "testskynet"
+	const sialink = skynet.URISkynetPrefix + skylink
+
 	// Test uploading a file with a custom filename.
 
 	interceptedRequest = ""
 
+	opts := skynet.DefaultUploadOptions
 	opts.CustomFilename = "foobar"
 	gock.New(skynet.DefaultPortalURL).
 		Post(opts.PortalUploadPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	sialink2, err = skynet.UploadFile(srcFile, opts)
+	sialink2, err := skynet.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,6 +82,57 @@ func TestUploadFile(t *testing.T) {
 	count := strings.Count(interceptedRequest, "Content-Disposition")
 	if count != 1 {
 		t.Fatalf("expected %v files sent, got %v", 1, count)
+	}
+
+	// Verify we don't have pending mocks.
+	if !gock.IsDone() {
+		t.Fatal("test finished with pending mocks")
+	}
+}
+
+// TestUploadFileSkykey tests uploading a file with either a skykey name or
+// skykey id set.
+func TestUploadFileSkykey(t *testing.T) {
+	defer gock.Off()
+
+	const srcFile = "../testdata/file1.txt"
+	const skylink = "testskynet"
+	const sialink = skynet.URISkynetPrefix + skylink
+	const skykeyName = "testcreateskykey"
+	const skykeyID = "pJAPPfWkWXpss3BvMDCJCw=="
+
+	// Test uploading a file with a custom filename.
+
+	opts := skynet.DefaultUploadOptions
+	opts.SkykeyName = skykeyName
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
+		MatchParam("skykeyname", skykeyName).
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	sialink2, err := skynet.UploadFile(srcFile, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	opts = skynet.DefaultUploadOptions
+	opts.SkykeyID = skykeyID
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
+		MatchParam("skykeyid", skykeyID).
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	sialink2, err = skynet.UploadFile(srcFile, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
 	}
 
 	// Verify we don't have pending mocks.
@@ -124,13 +191,101 @@ func TestUploadDirectory(t *testing.T) {
 		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
 	}
 
+	// Verify we don't have pending mocks.
+	if !gock.IsDone() {
+		t.Fatal("test finished with pending mocks")
+	}
+}
+
+// TestUploadDirectoryCustomName tests uploading a directory with a custom name.
+func TestUploadDirectoryCustomName(t *testing.T) {
+	defer gock.Off()
+	gock.Observe(interceptRequest)
+
+	const srcDir = "../testdata"
+	const skylink = "testskynet"
+	const sialink = skynet.URISkynetPrefix + skylink
+
 	// Upload a directory with a custom dirname.
 
-	opts = skynet.DefaultUploadOptions
+	opts := skynet.DefaultUploadOptions
 	opts.CustomDirname = "barfoo"
 	gock.New(skynet.DefaultPortalURL).
 		Post(opts.PortalUploadPath).
 		MatchParam("filename", "barfoo").
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	interceptedRequest = ""
+
+	sialink2, err := skynet.UploadDirectory(srcDir, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count := strings.Count(interceptedRequest, "Content-Disposition")
+	if count != 3 {
+		t.Fatalf("expected %v files sent, got %v", 3, count)
+	}
+
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Verify we don't have pending mocks.
+	if !gock.IsDone() {
+		t.Fatal("test finished with pending mocks")
+	}
+}
+
+// TestUploadDirectorySkykey tests uploading a directory with either a skykey
+// name or skykey id set.
+func TestUploadDirectorySkykey(t *testing.T) {
+	defer gock.Off()
+
+	const srcDir = "../testdata"
+	const skylink = "testskynet"
+	const sialink = skynet.URISkynetPrefix + skylink
+	const skykeyName = "testcreateskykey"
+	const skykeyID = "pJAPPfWkWXpss3BvMDCJCw=="
+
+	filename := filepath.Base(srcDir)
+
+	// Upload a directory with a skykey name set.
+
+	opts := skynet.DefaultUploadOptions
+	opts.SkykeyName = skykeyName
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
+		MatchParam("filename", filename).
+		MatchParam("skykeyname", skykeyName).
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	interceptedRequest = ""
+
+	sialink2, err := skynet.UploadDirectory(srcDir, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count := strings.Count(interceptedRequest, "Content-Disposition")
+	if count != 3 {
+		t.Fatalf("expected %v files sent, got %v", 3, count)
+	}
+
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Upload a directory with a skykey ID set.
+
+	opts = skynet.DefaultUploadOptions
+	opts.SkykeyID = skykeyID
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
+		MatchParam("filename", filename).
+		MatchParam("skykeyid", skykeyID).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 

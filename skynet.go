@@ -93,6 +93,11 @@ type (
 		// the base name of the directory being uploaded will be used by
 		// default.
 		CustomDirname string
+
+		// SkykeyName is the name of the skykey used to encrypt the upload.
+		SkykeyName string
+		// SkykeyID is the ID of the skykey used to encrypt the upload.
+		SkykeyID string
 	}
 
 	// Response structs
@@ -329,6 +334,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	url := makeURL(opts.PortalURL, opts.PortalUploadPath)
 
 	var fieldname string
+	var filename string
 	if len(uploadData) == 1 {
 		fieldname = opts.PortalFileFieldName
 	} else {
@@ -336,7 +342,18 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 			return "", errors.New("CustomDirname must be set when uploading multiple files")
 		}
 		fieldname = opts.PortalDirectoryFileFieldName
-		url = fmt.Sprintf("%s?filename=%s", url, opts.CustomDirname)
+		filename = opts.CustomDirname
+	}
+	// Always send the filename even if it's empty. This lets us always pass
+	// more URL parameters using &.
+	url = fmt.Sprintf("%s?filename=%s", url, filename)
+
+	// Include the skykey name or id, if given.
+	if opts.SkykeyName != "" {
+		url = fmt.Sprintf("%s&skykeyname=%s", url, opts.SkykeyName)
+	}
+	if opts.SkykeyID != "" {
+		url = fmt.Sprintf("%s&skykeyid=%s", url, opts.SkykeyID)
 	}
 
 	for filename, data := range uploadData {
