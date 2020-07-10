@@ -21,6 +21,7 @@ type (
 		Skykey string `json:"skykey"`
 		Name   string `json:"name"`
 		ID     string `json:"id"`
+		Type   string `json:"type"`
 	}
 
 	// UploadData contains data to upload, indexed by filenames.
@@ -38,26 +39,34 @@ type (
 
 	// AddSkykeyOptions contains the options used for addskykey.
 	AddSkykeyOptions struct {
-		// ConnectionOptions contains options used for connecting to Skynet.
 		ConnectionOptions
 		// PortalAddSkykeyPath is the relative URL path of the addskykey
 		// endpoint.
 		PortalAddSkykeyPath string
 	}
+	// CreateSkykeyOptions contains the options used for createskykey.
 	CreateSkykeyOptions struct {
-		// ConnectionOptions contains options used for connecting to Skynet.
 		ConnectionOptions
+		// PortalCreateSkykeyPath is the relative URL path of the createskykey
+		// endpoint.
+		PortalCreateSkykeyPath string
 	}
-	GetSkykeyIdOptions struct {
-		// ConnectionOptions contains options used for connecting to Skynet.
+	// GetSkykeyIDOptions contains the options used for skykeyid.
+	GetSkykeyIDOptions struct {
 		ConnectionOptions
+		// PortalGetSkykeyIDPath is the relative URL path of the skykeyid GET
+		// endpoint.
+		PortalGetSkykeyIDPath string
 	}
+	// GetSkykeyOptions contains the options used for skykey GET.
 	GetSkykeyOptions struct {
-		// ConnectionOptions contains options used for connecting to Skynet.
 		ConnectionOptions
+		// PortalGetSkykeyPath is the relative URL path of the skykey GET
+		// endpoint.
+		PortalGetSkykeyPath string
 	}
+	// ListSkykeysOptions contains the options used for skykeys GET.
 	ListSkykeysOptions struct {
-		// ConnectionOptions contains options used for connecting to Skynet.
 		ConnectionOptions
 		// PortalListSkykeysPath is the relative URL path of the skykeys
 		// endpoint.
@@ -66,7 +75,6 @@ type (
 
 	// DownloadOptions contains the options used for downloads.
 	DownloadOptions struct {
-		// ConnectionOptions contains options used for connecting to Skynet.
 		ConnectionOptions
 		// PortalDownloadPath is the relative URL path of the download endpoint.
 		PortalDownloadPath string
@@ -74,7 +82,6 @@ type (
 
 	// UploadOptions contains the options used for uploads.
 	UploadOptions struct {
-		// ConnectionOptions contains options used for connecting to Skynet.
 		ConnectionOptions
 
 		// PortalUploadPath is the relative URL path of the upload endpoint.
@@ -103,6 +110,14 @@ type (
 		Message string `json:"message"`
 	}
 
+	// CreateSkykeyResponse contains the response for creating a skykey.
+	CreateSkykeyResponse Skykey
+	// GetSkykeyResponse contains the response for getting a skykey.
+	GetSkykeyResponse Skykey
+	// GetSkykeyIDResponse contains the response for getting a skykey ID.
+	GetSkykeyIDResponse struct {
+		SkykeyID string `json:"skykeyid"`
+	}
 	// ListSkykeysResponse contains the response for listing skykeys.
 	ListSkykeysResponse struct {
 		// Skykeys is the returned list of skykeys.
@@ -132,24 +147,39 @@ var (
 
 	// DefaultAddSkykeyOptions contains the default addskykey options.
 	DefaultAddSkykeyOptions = AddSkykeyOptions{
-		ConnectionOptions: DefaultConnectionOptions,
+		ConnectionOptions:   DefaultConnectionOptions,
 		PortalAddSkykeyPath: "/skynet/addskykey",
+	}
+	// DefaultCreateSkykeyOptions contains the default createskykey options.
+	DefaultCreateSkykeyOptions = CreateSkykeyOptions{
+		ConnectionOptions:      DefaultConnectionOptions,
+		PortalCreateSkykeyPath: "/skynet/createskykey",
+	}
+	// DefaultGetSkykeyIDOptions contains the default skykeyid GET options.
+	DefaultGetSkykeyIDOptions = GetSkykeyIDOptions{
+		ConnectionOptions:     DefaultConnectionOptions,
+		PortalGetSkykeyIDPath: "/skynet/skykeyid",
+	}
+	// DefaultGetSkykeyOptions contains the default skykey GET options.
+	DefaultGetSkykeyOptions = GetSkykeyOptions{
+		ConnectionOptions:   DefaultConnectionOptions,
+		PortalGetSkykeyPath: "/skynet/skykey",
 	}
 	// DefaultListSkykeysOptions contains the default skykeys options.
 	DefaultListSkykeysOptions = ListSkykeysOptions{
-		ConnectionOptions: DefaultConnectionOptions,
+		ConnectionOptions:     DefaultConnectionOptions,
 		PortalListSkykeysPath: "/skynet/skykeys",
 	}
 
 	// DefaultDownloadOptions contains the default download options.
 	DefaultDownloadOptions = DownloadOptions{
-		ConnectionOptions: DefaultConnectionOptions,
+		ConnectionOptions:  DefaultConnectionOptions,
 		PortalDownloadPath: "/",
 	}
 
 	// DefaultUploadOptions contains the default upload options.
 	DefaultUploadOptions = UploadOptions{
-		ConnectionOptions: DefaultConnectionOptions,
+		ConnectionOptions:            DefaultConnectionOptions,
 		PortalUploadPath:             "/skynet/skyfile",
 		PortalFileFieldName:          "file",
 		PortalDirectoryFileFieldName: "files[]",
@@ -171,17 +201,143 @@ func AddSkykey(skykey string, opts AddSkykeyOptions) error {
 		return errors.AddContext(err, "could not make request")
 	}
 
-	// Upload the file to Skynet.
+	// Add the skykey.
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.AddContext(err, "could not execute POST")
 	}
 	if resp.StatusCode >= 400 {
-		return makeResponseError(resp)
+		return errors.AddContext(makeResponseError(resp), "error code received")
 	}
 
 	return nil
+}
+
+// CreateSkykey returns a new skykey created and stored under the given name
+// with the given type. skykeyType can be either "public-id" or "private-id".
+func CreateSkykey(name, skykeyType string, opts CreateSkykeyOptions) (Skykey, error) {
+	body := &bytes.Buffer{}
+	url := makeURL(opts.PortalURL, opts.PortalCreateSkykeyPath)
+	url = fmt.Sprintf("%s?name=%s&type=%s", url, name, skykeyType)
+
+	req, err := makeRequest(opts.ConnectionOptions, "POST", url, body)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not make request")
+	}
+
+	// Create the skykey.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not execute POST")
+	}
+	if resp.StatusCode >= 400 {
+		return Skykey{}, errors.AddContext(makeResponseError(resp), "error code received")
+	}
+
+	// parse the response
+	body = &bytes.Buffer{}
+	_, err = body.ReadFrom(resp.Body)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not parse response body")
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not close response body")
+	}
+
+	var apiResponse CreateSkykeyResponse
+	err = json.Unmarshal(body.Bytes(), &apiResponse)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not unmarshal response JSON")
+	}
+
+	return Skykey(apiResponse), nil
+}
+
+// GetSkykey returns the given skykey. One of either name or id must be provided
+// -- the one that is not provided should be "".
+func GetSkykey(name, id string, opts GetSkykeyOptions) (Skykey, error) {
+	body := &bytes.Buffer{}
+	url := makeURL(opts.PortalURL, opts.PortalGetSkykeyPath)
+	url = fmt.Sprintf("%s?name=%s&id=%s", url, name, id)
+
+	req, err := makeRequest(opts.ConnectionOptions, "GET", url, body)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not make request")
+	}
+
+	// Create the skykey.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not execute GET")
+	}
+	if resp.StatusCode >= 400 {
+		return Skykey{}, errors.AddContext(makeResponseError(resp), "error code received")
+	}
+
+	// parse the response
+	body = &bytes.Buffer{}
+	_, err = body.ReadFrom(resp.Body)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not parse response body")
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not close response body")
+	}
+
+	var apiResponse GetSkykeyResponse
+	err = json.Unmarshal(body.Bytes(), &apiResponse)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not unmarshal response JSON")
+	}
+
+	return Skykey(apiResponse), nil
+}
+
+// GetSkykeyID returns the base-64 encoded ID of the skykey stored under the
+// given name.
+func GetSkykeyID(name string, opts GetSkykeyIDOptions) (string, error) {
+	body := &bytes.Buffer{}
+	url := makeURL(opts.PortalURL, opts.PortalGetSkykeyIDPath)
+	url = fmt.Sprintf("%s?name=%s", url, name)
+
+	req, err := makeRequest(opts.ConnectionOptions, "GET", url, body)
+	if err != nil {
+		return "", errors.AddContext(err, "could not make request")
+	}
+
+	// Create the skykey.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", errors.AddContext(err, "could not execute GET")
+	}
+	if resp.StatusCode >= 400 {
+		return "", errors.AddContext(makeResponseError(resp), "error code received")
+	}
+
+	// parse the response
+	body = &bytes.Buffer{}
+	_, err = body.ReadFrom(resp.Body)
+	if err != nil {
+		return "", errors.AddContext(err, "could not parse response body")
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return "", errors.AddContext(err, "could not close response body")
+	}
+
+	var apiResponse GetSkykeyIDResponse
+	err = json.Unmarshal(body.Bytes(), &apiResponse)
+	if err != nil {
+		return "", errors.AddContext(err, "could not unmarshal response JSON")
+	}
+
+	return apiResponse.SkykeyID, nil
 }
 
 // ListSkykeys returns a list of all skykeys.
@@ -199,7 +355,7 @@ func ListSkykeys(opts ListSkykeysOptions) ([]Skykey, error) {
 		return nil, errors.AddContext(err, "could not execute GET")
 	}
 	if resp.StatusCode >= 400 {
-		return nil, makeResponseError(resp)
+		return nil, errors.AddContext(makeResponseError(resp), "error code received")
 	}
 
 	// parse the response
@@ -270,7 +426,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 		return "", errors.AddContext(err, "could not execute POST")
 	}
 	if resp.StatusCode >= 400 {
-		return "", makeResponseError(resp)
+		return "", errors.AddContext(makeResponseError(resp), "error code received")
 	}
 
 	// parse the response
@@ -378,7 +534,7 @@ func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
 		return nil, errors.AddContext(err, "could not execute GET")
 	}
 	if resp.StatusCode >= 400 {
-		return nil, makeResponseError(resp)
+		return nil, errors.AddContext(makeResponseError(resp), "error code received")
 	}
 
 	return resp.Body, nil
@@ -422,12 +578,13 @@ func makeResponseError(resp *http.Response) error {
 	}
 
 	var apiResponse ErrorResponse
+	message := string(body.Bytes())
 	err = json.Unmarshal(body.Bytes(), &apiResponse)
-	if err != nil {
-		return errors.AddContext(err, "could not unmarshal response JSON")
+	if err == nil {
+		message = apiResponse.Message
 	}
 
-	context := fmt.Sprintf("%v response from %v: %v", resp.StatusCode, resp.Request.Method, apiResponse.Message)
+	context := fmt.Sprintf("%v response from %v: %v", resp.StatusCode, resp.Request.Method, message)
 	return errors.AddContext(ErrResponseError, context)
 }
 
