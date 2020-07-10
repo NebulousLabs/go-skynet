@@ -1,30 +1,13 @@
 package tests
 
 import (
-	"bytes"
-	"io/ioutil"
-	"net/http"
-	"net/http/httputil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	skynet "github.com/NebulousLabs/go-skynet"
 	"gopkg.in/h2non/gock.v1"
-)
-
-var (
-	// interceptRequest is a gock observer function that intercepts requests and
-	// writes them to `interceptedRequest`.
-	interceptRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
-		bytes, _ := httputil.DumpRequestOut(request, true)
-		interceptedRequest = string(bytes)
-	}
-
-	// interceptedRequest contains the raw data of intercepted requests.
-	interceptedRequest string
 )
 
 // TestUploadFile tests uploading a single file.
@@ -84,54 +67,6 @@ func TestUploadFile(t *testing.T) {
 	count := strings.Count(interceptedRequest, "Content-Disposition")
 	if count != 1 {
 		t.Fatalf("expected %v files sent, got %v", 1, count)
-	}
-
-	// Verify we don't have pending mocks.
-	if !gock.IsDone() {
-		t.Fatal("test finished with pending mocks")
-	}
-}
-
-// TestDownloadFile tests downloading a single file.
-func TestDownloadFile(t *testing.T) {
-	defer gock.Off() // Flush pending mocks after test execution
-
-	const srcFile = "../testdata/file1.txt"
-	const skylink = "testskynet"
-	const sialink = skynet.URISkynetPrefix + skylink
-
-	file, err := ioutil.TempFile("", t.Name())
-	if err != nil {
-		t.Fatal(err)
-	}
-	dstFile := file.Name()
-
-	// Download file request.
-	//
-	// Match against the full URL, including the skylink.
-	urlpath := strings.TrimRight(skynet.DefaultDownloadOptions.PortalDownloadPath, "/") + "/" + skylink
-	gock.New(skynet.DefaultDownloadOptions.PortalURL).
-		Get(urlpath).
-		Reply(200).
-		BodyString("test\n")
-
-	// Pass the full sialink to verify that the prefix is trimmed.
-	err = skynet.DownloadFile(dstFile, sialink, skynet.DefaultDownloadOptions)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Check file equality.
-	f1, err1 := ioutil.ReadFile(srcFile)
-	if err1 != nil {
-		t.Fatal(err1)
-	}
-	f2, err2 := ioutil.ReadFile(path.Clean(dstFile))
-	if err2 != nil {
-		t.Fatal(err2)
-	}
-	if !bytes.Equal(f1, f2) {
-		t.Fatalf("Downloaded file at %v did not equal uploaded file %v", dstFile, srcFile)
 	}
 
 	// Verify we don't have pending mocks.
