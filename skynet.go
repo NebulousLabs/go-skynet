@@ -51,13 +51,6 @@ type (
 		// endpoint.
 		PortalCreateSkykeyPath string
 	}
-	// GetSkykeyIDOptions contains the options used for skykeyid.
-	GetSkykeyIDOptions struct {
-		ConnectionOptions
-		// PortalGetSkykeyIDPath is the relative URL path of the skykeyid GET
-		// endpoint.
-		PortalGetSkykeyIDPath string
-	}
 	// GetSkykeyOptions contains the options used for skykey GET.
 	GetSkykeyOptions struct {
 		ConnectionOptions
@@ -114,10 +107,6 @@ type (
 	CreateSkykeyResponse Skykey
 	// GetSkykeyResponse contains the response for getting a skykey.
 	GetSkykeyResponse Skykey
-	// GetSkykeyIDResponse contains the response for getting a skykey ID.
-	GetSkykeyIDResponse struct {
-		SkykeyID string `json:"skykeyid"`
-	}
 	// ListSkykeysResponse contains the response for listing skykeys.
 	ListSkykeysResponse struct {
 		// Skykeys is the returned list of skykeys.
@@ -154,11 +143,6 @@ var (
 	DefaultCreateSkykeyOptions = CreateSkykeyOptions{
 		ConnectionOptions:      DefaultConnectionOptions,
 		PortalCreateSkykeyPath: "/skynet/createskykey",
-	}
-	// DefaultGetSkykeyIDOptions contains the default skykeyid GET options.
-	DefaultGetSkykeyIDOptions = GetSkykeyIDOptions{
-		ConnectionOptions:     DefaultConnectionOptions,
-		PortalGetSkykeyIDPath: "/skynet/skykeyid",
 	}
 	// DefaultGetSkykeyOptions contains the default skykey GET options.
 	DefaultGetSkykeyOptions = GetSkykeyOptions{
@@ -296,48 +280,6 @@ func GetSkykey(name, id string, opts GetSkykeyOptions) (Skykey, error) {
 	}
 
 	return Skykey(apiResponse), nil
-}
-
-// GetSkykeyID returns the base-64 encoded ID of the skykey stored under the
-// given name.
-func GetSkykeyID(name string, opts GetSkykeyIDOptions) (string, error) {
-	body := &bytes.Buffer{}
-	url := makeURL(opts.PortalURL, opts.PortalGetSkykeyIDPath)
-	url = fmt.Sprintf("%s?name=%s", url, name)
-
-	req, err := makeRequest(opts.ConnectionOptions, "GET", url, body)
-	if err != nil {
-		return "", errors.AddContext(err, "could not make request")
-	}
-
-	// Create the skykey.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", errors.AddContext(err, "could not execute GET")
-	}
-	if resp.StatusCode >= 400 {
-		return "", errors.AddContext(makeResponseError(resp), "error code received")
-	}
-
-	// parse the response
-	body = &bytes.Buffer{}
-	_, err = body.ReadFrom(resp.Body)
-	if err != nil {
-		return "", errors.AddContext(err, "could not parse response body")
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		return "", errors.AddContext(err, "could not close response body")
-	}
-
-	var apiResponse GetSkykeyIDResponse
-	err = json.Unmarshal(body.Bytes(), &apiResponse)
-	if err != nil {
-		return "", errors.AddContext(err, "could not unmarshal response JSON")
-	}
-
-	return apiResponse.SkykeyID, nil
 }
 
 // ListSkykeys returns a list of all skykeys.
