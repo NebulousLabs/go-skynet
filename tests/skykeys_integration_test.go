@@ -15,7 +15,7 @@ func TestAddSkykey(t *testing.T) {
 	const skykey = "testskykey"
 
 	opts := skynet.DefaultAddSkykeyOptions
-	gock.New(opts.PortalURL).
+	gock.New(skynet.DefaultPortalURL).
 		Post(opts.PortalAddSkykeyPath).
 		MatchParam("skykey", skykey).
 		Reply(200)
@@ -48,7 +48,7 @@ func TestListSkykeys(t *testing.T) {
 	response := []skynet.Skykey{skykey1, skykey2}
 
 	opts := skynet.DefaultListSkykeysOptions
-	gock.New(opts.PortalURL).
+	gock.New(skynet.DefaultPortalURL).
 		Get(opts.PortalListSkykeysPath).
 		Reply(200).
 		JSON(map[string][]skynet.Skykey{"skykeys": response})

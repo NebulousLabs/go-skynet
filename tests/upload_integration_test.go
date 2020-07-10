@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,19 +21,20 @@ func TestUploadFile(t *testing.T) {
 	// Test that uploading a nonexistent file fails.
 
 	_, err := skynet.UploadFile("this-should-not-exist.txt", skynet.DefaultUploadOptions)
-	if !os.IsNotExist(err) {
-		t.Fatalf("expected IsNotExist error, got %v", err)
+	if !strings.Contains(err.Error(), "no such file or directory") {
+		t.Fatalf("expected ErrNotExist error, got %v", err)
 	}
 
 	// Test uploading a file.
 
 	// Upload file request.
-	gock.New(skynet.DefaultUploadOptions.PortalURL).
-		Post(skynet.DefaultUploadOptions.PortalUploadPath).
+	opts := skynet.DefaultUploadOptions
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	sialink2, err := skynet.UploadFile(srcFile, skynet.DefaultUploadOptions)
+	sialink2, err := skynet.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,13 +46,12 @@ func TestUploadFile(t *testing.T) {
 
 	interceptedRequest = ""
 
-	gock.New(skynet.DefaultUploadOptions.PortalURL).
-		Post(skynet.DefaultUploadOptions.PortalUploadPath).
+	opts.CustomFilename = "foobar"
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	opts := skynet.DefaultUploadOptions
-	opts.CustomFilename = "foobar"
 	sialink2, err = skynet.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
@@ -88,15 +87,16 @@ func TestUploadDirectory(t *testing.T) {
 
 	// Upload a directory.
 
-	gock.New(skynet.DefaultUploadOptions.PortalURL).
-		Post(skynet.DefaultUploadOptions.PortalUploadPath).
+	opts := skynet.DefaultUploadOptions
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
 		MatchParam("filename", filename).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
 	interceptedRequest = ""
 
-	sialink2, err := skynet.UploadDirectory(srcDir, skynet.DefaultUploadOptions)
+	sialink2, err := skynet.UploadDirectory(srcDir, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,16 +126,15 @@ func TestUploadDirectory(t *testing.T) {
 
 	// Upload a directory with a custom dirname.
 
-	gock.New(skynet.DefaultUploadOptions.PortalURL).
-		Post(skynet.DefaultUploadOptions.PortalUploadPath).
+	opts = skynet.DefaultUploadOptions
+	opts.CustomDirname = "barfoo"
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.PortalUploadPath).
 		MatchParam("filename", "barfoo").
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
 	interceptedRequest = ""
-
-	opts := skynet.DefaultUploadOptions
-	opts.CustomDirname = "barfoo"
 
 	sialink2, err = skynet.UploadDirectory(srcDir, opts)
 	if err != nil {

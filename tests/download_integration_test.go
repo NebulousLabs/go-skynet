@@ -30,7 +30,7 @@ func TestDownloadFile(t *testing.T) {
 	// Match against the full URL, including the skylink.
 	opts := skynet.DefaultDownloadOptions
 	urlpath := strings.TrimRight(opts.PortalDownloadPath, "/") + "/" + skylink
-	gock.New(opts.PortalURL).
+	gock.New(skynet.DefaultPortalURL).
 		Get(urlpath).
 		Reply(200).
 		BodyString("test\n")

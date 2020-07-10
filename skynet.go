@@ -28,29 +28,37 @@ type (
 
 	// Options structs.
 
-	// AddSkykeyOptions contains the options used for addskykey.
-	AddSkykeyOptions struct {
+	// ConnectionOptions contains options used for connecting to Skynet.
+	ConnectionOptions struct {
 		// PortalURL is the URL of the portal to use.
 		PortalURL string
+		// CustomUserAgent is the custom user agent to use.
+		CustomUserAgent string
+	}
+
+	// AddSkykeyOptions contains the options used for addskykey.
+	AddSkykeyOptions struct {
+		// ConnectionOptions contains options used for connecting to Skynet.
+		ConnectionOptions
 		// PortalAddSkykeyPath is the relative URL path of the addskykey
 		// endpoint.
 		PortalAddSkykeyPath string
 	}
 	CreateSkykeyOptions struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
+		// ConnectionOptions contains options used for connecting to Skynet.
+		ConnectionOptions
 	}
 	GetSkykeyIdOptions struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
+		// ConnectionOptions contains options used for connecting to Skynet.
+		ConnectionOptions
 	}
 	GetSkykeyOptions struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
+		// ConnectionOptions contains options used for connecting to Skynet.
+		ConnectionOptions
 	}
 	ListSkykeysOptions struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
+		// ConnectionOptions contains options used for connecting to Skynet.
+		ConnectionOptions
 		// PortalListSkykeysPath is the relative URL path of the skykeys
 		// endpoint.
 		PortalListSkykeysPath string
@@ -58,16 +66,17 @@ type (
 
 	// DownloadOptions contains the options used for downloads.
 	DownloadOptions struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
+		// ConnectionOptions contains options used for connecting to Skynet.
+		ConnectionOptions
 		// PortalDownloadPath is the relative URL path of the download endpoint.
 		PortalDownloadPath string
 	}
 
 	// UploadOptions contains the options used for uploads.
 	UploadOptions struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
+		// ConnectionOptions contains options used for connecting to Skynet.
+		ConnectionOptions
+
 		// PortalUploadPath is the relative URL path of the upload endpoint.
 		PortalUploadPath string
 		// PortalFileFieldName is the fieldName for files on the portal.
@@ -116,26 +125,31 @@ const (
 )
 
 var (
+	// DefaultConnectionOptions contains the default connection options.
+	DefaultConnectionOptions = ConnectionOptions{
+		PortalURL: DefaultPortalURL,
+	}
+
 	// DefaultAddSkykeyOptions contains the default addskykey options.
 	DefaultAddSkykeyOptions = AddSkykeyOptions{
-		PortalURL:           DefaultPortalURL,
+		ConnectionOptions: DefaultConnectionOptions,
 		PortalAddSkykeyPath: "/skynet/addskykey",
 	}
 	// DefaultListSkykeysOptions contains the default skykeys options.
 	DefaultListSkykeysOptions = ListSkykeysOptions{
-		PortalURL:             DefaultPortalURL,
+		ConnectionOptions: DefaultConnectionOptions,
 		PortalListSkykeysPath: "/skynet/skykeys",
 	}
 
 	// DefaultDownloadOptions contains the default download options.
 	DefaultDownloadOptions = DownloadOptions{
-		PortalURL:          DefaultPortalURL,
+		ConnectionOptions: DefaultConnectionOptions,
 		PortalDownloadPath: "/",
 	}
 
 	// DefaultUploadOptions contains the default upload options.
 	DefaultUploadOptions = UploadOptions{
-		PortalURL:                    DefaultPortalURL,
+		ConnectionOptions: DefaultConnectionOptions,
 		PortalUploadPath:             "/skynet/skyfile",
 		PortalFileFieldName:          "file",
 		PortalDirectoryFileFieldName: "files[]",
@@ -152,9 +166,9 @@ func AddSkykey(skykey string, opts AddSkykeyOptions) error {
 	url := makeURL(opts.PortalURL, opts.PortalAddSkykeyPath)
 	url = fmt.Sprintf("%s?skykey=%s", url, skykey)
 
-	req, err := http.NewRequest("POST", url, body)
+	req, err := makeRequest(opts.ConnectionOptions, "POST", url, body)
 	if err != nil {
-		return errors.AddContext(err, "could not create POST request")
+		return errors.AddContext(err, "could not make request")
 	}
 
 	// Upload the file to Skynet.
@@ -172,7 +186,15 @@ func AddSkykey(skykey string, opts AddSkykeyOptions) error {
 
 // ListSkykeys returns a list of all skykeys.
 func ListSkykeys(opts ListSkykeysOptions) ([]Skykey, error) {
-	resp, err := http.Get(makeURL(opts.PortalURL, opts.PortalListSkykeysPath))
+	url := makeURL(opts.PortalURL, opts.PortalListSkykeysPath)
+
+	req, err := makeRequest(opts.ConnectionOptions, "GET", url, &bytes.Buffer{})
+	if err != nil {
+		return nil, errors.AddContext(err, "could not make request")
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute GET")
 	}
@@ -343,8 +365,15 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 // Download downloads generic data.
 func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
 	url := makeURL(opts.PortalURL, opts.PortalDownloadPath)
+	url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimPrefix(skylink, "sia://"))
 
-	resp, err := http.Get(fmt.Sprintf("%s/%s", url, strings.TrimPrefix(skylink, "sia://")))
+	req, err := makeRequest(opts.ConnectionOptions, "GET", url, &bytes.Buffer{})
+	if err != nil {
+		return nil, errors.AddContext(err, "could not make request")
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute GET")
 	}
@@ -400,6 +429,18 @@ func makeResponseError(resp *http.Response) error {
 
 	context := fmt.Sprintf("%v response from %v: %v", resp.StatusCode, resp.Request.Method, apiResponse.Message)
 	return errors.AddContext(ErrResponseError, context)
+}
+
+// makeRequest makes a request given the ConnectionOptions.
+func makeRequest(copts ConnectionOptions, method, url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
+	}
+	if copts.CustomUserAgent != "" {
+		req.Header.Set("User-Agent", copts.CustomUserAgent)
+	}
+	return req, nil
 }
 
 // makeURL makes a URL from the given parts.
