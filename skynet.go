@@ -178,26 +178,15 @@ var (
 	ErrResponseError = errors.New("error response")
 )
 
-// AddSkykey stores the given base-64 encoded skykey with the renter's skykey
-// manager.
+// AddSkykey stores the given base-64 encoded skykey with the skykey manager.
 func AddSkykey(skykey string, opts AddSkykeyOptions) error {
 	body := &bytes.Buffer{}
 	url := makeURL(opts.PortalURL, opts.PortalAddSkykeyPath)
 	url = fmt.Sprintf("%s?skykey=%s", url, skykey)
 
-	req, err := makeRequest(opts.ConnectionOptions, "POST", url, body)
+	_, err := executeRequest(opts.ConnectionOptions, "POST", url, body)
 	if err != nil {
-		return errors.AddContext(err, "could not make request")
-	}
-
-	// Add the skykey.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return errors.AddContext(err, "could not execute POST")
-	}
-	if resp.StatusCode >= 400 {
-		return errors.AddContext(makeResponseError(resp), "error code received")
+		return errors.AddContext(err, "could not execute request")
 	}
 
 	return nil
@@ -210,34 +199,18 @@ func CreateSkykey(name, skykeyType string, opts CreateSkykeyOptions) (Skykey, er
 	url := makeURL(opts.PortalURL, opts.PortalCreateSkykeyPath)
 	url = fmt.Sprintf("%s?name=%s&type=%s", url, name, skykeyType)
 
-	req, err := makeRequest(opts.ConnectionOptions, "POST", url, body)
+	resp, err := executeRequest(opts.ConnectionOptions, "POST", url, body)
 	if err != nil {
-		return Skykey{}, errors.AddContext(err, "could not make request")
+		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
 
-	// Create the skykey.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return Skykey{}, errors.AddContext(err, "could not execute POST")
-	}
-	if resp.StatusCode >= 400 {
-		return Skykey{}, errors.AddContext(makeResponseError(resp), "error code received")
-	}
-
-	// parse the response
-	body = &bytes.Buffer{}
-	_, err = body.ReadFrom(resp.Body)
+	respBody, err := parseResponseBody(resp)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not parse response body")
 	}
-	err = resp.Body.Close()
-	if err != nil {
-		return Skykey{}, errors.AddContext(err, "could not close response body")
-	}
 
 	var apiResponse CreateSkykeyResponse
-	err = json.Unmarshal(body.Bytes(), &apiResponse)
+	err = json.Unmarshal(respBody.Bytes(), &apiResponse)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not unmarshal response JSON")
 	}
@@ -246,40 +219,24 @@ func CreateSkykey(name, skykeyType string, opts CreateSkykeyOptions) (Skykey, er
 }
 
 // GetSkykey returns the given skykey. One of either name or id must be provided
-// -- the one that is not provided should be "".
+// -- the one that is not provided should be left blank.
 func GetSkykey(name, id string, opts GetSkykeyOptions) (Skykey, error) {
 	body := &bytes.Buffer{}
 	url := makeURL(opts.PortalURL, opts.PortalGetSkykeyPath)
 	url = fmt.Sprintf("%s?name=%s&id=%s", url, name, id)
 
-	req, err := makeRequest(opts.ConnectionOptions, "GET", url, body)
+	resp, err := executeRequest(opts.ConnectionOptions, "GET", url, body)
 	if err != nil {
-		return Skykey{}, errors.AddContext(err, "could not make request")
+		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
 
-	// Create the skykey.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return Skykey{}, errors.AddContext(err, "could not execute GET")
-	}
-	if resp.StatusCode >= 400 {
-		return Skykey{}, errors.AddContext(makeResponseError(resp), "error code received")
-	}
-
-	// parse the response
-	body = &bytes.Buffer{}
-	_, err = body.ReadFrom(resp.Body)
+	respBody, err := parseResponseBody(resp)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not parse response body")
 	}
-	err = resp.Body.Close()
-	if err != nil {
-		return Skykey{}, errors.AddContext(err, "could not close response body")
-	}
 
 	var apiResponse GetSkykeyResponse
-	err = json.Unmarshal(body.Bytes(), &apiResponse)
+	err = json.Unmarshal(respBody.Bytes(), &apiResponse)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not unmarshal response JSON")
 	}
@@ -291,33 +248,18 @@ func GetSkykey(name, id string, opts GetSkykeyOptions) (Skykey, error) {
 func ListSkykeys(opts ListSkykeysOptions) ([]Skykey, error) {
 	url := makeURL(opts.PortalURL, opts.PortalListSkykeysPath)
 
-	req, err := makeRequest(opts.ConnectionOptions, "GET", url, &bytes.Buffer{})
+	resp, err := executeRequest(opts.ConnectionOptions, "GET", url, &bytes.Buffer{})
 	if err != nil {
-		return nil, errors.AddContext(err, "could not make request")
+		return nil, errors.AddContext(err, "could not execute request")
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	respBody, err := parseResponseBody(resp)
 	if err != nil {
-		return nil, errors.AddContext(err, "could not execute GET")
-	}
-	if resp.StatusCode >= 400 {
-		return nil, errors.AddContext(makeResponseError(resp), "error code received")
-	}
-
-	// parse the response
-	body := &bytes.Buffer{}
-	_, err = body.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, errors.AddContext(err, "could not read from response body")
-	}
-	err = resp.Body.Close()
-	if err != nil {
-		return nil, errors.AddContext(err, "could not close response body")
+		return nil, errors.AddContext(err, "could not parse response body")
 	}
 
 	var apiResponse ListSkykeysResponse
-	err = json.Unmarshal(body.Bytes(), &apiResponse)
+	err = json.Unmarshal(respBody.Bytes(), &apiResponse)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not unmarshal response JSON")
 	}
@@ -372,35 +314,18 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 		return "", errors.AddContext(err, "could not close writer")
 	}
 
-	req, err := http.NewRequest("POST", url, body)
+	resp, err := executeRequest(opts.ConnectionOptions, "POST", url, body)
 	if err != nil {
-		return "", errors.AddContext(err, "could not create POST request")
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	// upload the file to skynet
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", errors.AddContext(err, "could not execute POST")
-	}
-	if resp.StatusCode >= 400 {
-		return "", errors.AddContext(makeResponseError(resp), "error code received")
+		return "", errors.AddContext(err, "could not execute request")
 	}
 
-	// parse the response
-	body = &bytes.Buffer{}
-	_, err = body.ReadFrom(resp.Body)
+	respBody, err := parseResponseBody(resp)
 	if err != nil {
 		return "", errors.AddContext(err, "could not parse response body")
 	}
-	err = resp.Body.Close()
-	if err != nil {
-		return "", errors.AddContext(err, "could not close response body")
-	}
 
 	var apiResponse UploadResponse
-	err = json.Unmarshal(body.Bytes(), &apiResponse)
+	err = json.Unmarshal(respBody.Bytes(), &apiResponse)
 	if err != nil {
 		return "", errors.AddContext(err, "could not unmarshal response JSON")
 	}
@@ -482,18 +407,9 @@ func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
 	url := makeURL(opts.PortalURL, opts.PortalDownloadPath)
 	url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimPrefix(skylink, "sia://"))
 
-	req, err := makeRequest(opts.ConnectionOptions, "GET", url, &bytes.Buffer{})
+	resp, err := executeRequest(opts.ConnectionOptions, "GET", url, &bytes.Buffer{})
 	if err != nil {
-		return nil, errors.AddContext(err, "could not make request")
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, errors.AddContext(err, "could not execute GET")
-	}
-	if resp.StatusCode >= 400 {
-		return nil, errors.AddContext(makeResponseError(resp), "error code received")
+		return nil, errors.AddContext(err, "could not execute request")
 	}
 
 	return resp.Body, nil
@@ -504,9 +420,8 @@ func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 	path = gopath.Clean(path)
 
 	downloadData, err := Download(skylink, opts)
-
 	if err != nil {
-		return
+		return errors.AddContext(err, "could not download data")
 	}
 	defer func() {
 		err = errors.Extend(err, downloadData.Close())
@@ -514,14 +429,37 @@ func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 
 	out, err := os.Create(path)
 	if err != nil {
-		return err
+		return errors.AddContext(err, "could not create file at "+path)
 	}
 	defer func() {
 		err = errors.Extend(err, out.Close())
 	}()
 
 	_, err = io.Copy(out, downloadData)
-	return err
+	return errors.AddContext(err, "could not copy data to file at "+path)
+}
+
+// executeRequest makes and executes a request given the ConnectionOptions.
+func executeRequest(copts ConnectionOptions, method, url string, reqBody io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, reqBody)
+	if err != nil {
+		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
+	}
+	if copts.CustomUserAgent != "" {
+		req.Header.Set("User-Agent", copts.CustomUserAgent)
+	}
+
+	// Create the skykey.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.AddContext(err, "could not execute POST")
+	}
+	if resp.StatusCode >= 400 {
+		return nil, errors.AddContext(makeResponseError(resp), "error code received")
+	}
+
+	return resp, nil
 }
 
 // makeResponseError makes an error given an error response.
@@ -547,21 +485,25 @@ func makeResponseError(resp *http.Response) error {
 	return errors.AddContext(ErrResponseError, context)
 }
 
-// makeRequest makes a request given the ConnectionOptions.
-func makeRequest(copts ConnectionOptions, method, url string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
-	}
-	if copts.CustomUserAgent != "" {
-		req.Header.Set("User-Agent", copts.CustomUserAgent)
-	}
-	return req, nil
-}
-
 // makeURL makes a URL from the given parts.
 func makeURL(portalURL, portalPath string) string {
 	return fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(portalPath, "/"))
+}
+
+// parseResponseBody parses the response body.
+func parseResponseBody(resp *http.Response) (respBody *bytes.Buffer, err error) {
+	defer func() {
+		err = errors.Extend(err, resp.Body.Close())
+	}()
+
+	// parse the response
+	respBody = &bytes.Buffer{}
+	_, err = respBody.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, errors.AddContext(err, "could not parse response body")
+	}
+
+	return respBody, nil
 }
 
 // walkDirectory walks a given directory recursively, returning the paths of all
