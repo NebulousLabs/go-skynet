@@ -286,17 +286,13 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 		fieldname = opts.PortalDirectoryFileFieldName
 		filename = opts.CustomDirname
 	}
-	// Always send the filename even if it's empty. This lets us always pass
-	// more URL parameters using &.
+	// The filename is set first and handles including ? in the url string. All
+	// subsequent parameters should include an &.
 	url = fmt.Sprintf("%s?filename=%s", url, filename)
 
 	// Include the skykey name or id, if given.
-	if opts.SkykeyName != "" {
-		url = fmt.Sprintf("%s&skykeyname=%s", url, opts.SkykeyName)
-	}
-	if opts.SkykeyID != "" {
-		url = fmt.Sprintf("%s&skykeyid=%s", url, opts.SkykeyID)
-	}
+	url = fmt.Sprintf("%s&skykeyname=%s", url, opts.SkykeyName)
+	url = fmt.Sprintf("%s&skykeyid=%s", url, opts.SkykeyID)
 
 	for filename, data := range uploadData {
 		part, err := writer.CreateFormFile(fieldname, filename)
@@ -449,11 +445,11 @@ func executeRequest(copts ConnectionOptions, method, url string, reqBody io.Read
 		req.Header.Set("User-Agent", copts.CustomUserAgent)
 	}
 
-	// Create the skykey.
+	// Execute the request.
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.AddContext(err, "could not execute POST")
+		return nil, errors.AddContext(err, "could not execute request")
 	}
 	if resp.StatusCode >= 400 {
 		return nil, errors.AddContext(makeResponseError(resp), "error code received")

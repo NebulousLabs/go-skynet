@@ -48,7 +48,7 @@ func TestCreateSkykey(t *testing.T) {
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
-	skykey2, err := skynet.CreateSkykey(name, skykeyType, opts)
+	fullSkykey, err := skynet.CreateSkykey(name, skykeyType, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,8 +59,8 @@ func TestCreateSkykey(t *testing.T) {
 		ID:     id,
 		Type:   skykeyType,
 	}
-	if !reflect.DeepEqual(expectedSkykey, skykey2) {
-		t.Fatalf("expected skykey %v, got %v", expectedSkykey, skykey2)
+	if !reflect.DeepEqual(expectedSkykey, fullSkykey) {
+		t.Fatalf("expected skykey %v, got %v", expectedSkykey, fullSkykey)
 	}
 
 	// Verify we don't have pending mocks.
@@ -73,8 +73,55 @@ func TestCreateSkykey(t *testing.T) {
 func TestGetSkykey(t *testing.T) {
 	defer gock.Off()
 
+	const skykey = "skykey:BAAAAAAAAABrZXkxAAAAAAAAAAQgAAAAAAAAADiObVg49-0juJ8udAx4qMW-TEHgDxfjA0fjJSNBuJ4a"
 	const name = "testcreateskykey"
 	const id = "pJAPPfWkWXpss3BvMDCJCw=="
+	const skykeyType = "public-id"
+
+	// Get by name.
+
+	opts := skynet.DefaultGetSkykeyOptions
+	gock.New(skynet.DefaultPortalURL).
+		Get(opts.PortalGetSkykeyPath).
+		Reply(200).
+		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
+
+	fullSkykey, err := skynet.GetSkykey(name, "", opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSkykey := skynet.Skykey{
+		Skykey: skykey,
+		Name:   name,
+		ID:     id,
+		Type:   skykeyType,
+	}
+	if !reflect.DeepEqual(expectedSkykey, fullSkykey) {
+		t.Fatalf("expected skykey %v, got %v", expectedSkykey, fullSkykey)
+	}
+
+	// Get by ID
+
+	gock.New(skynet.DefaultPortalURL).
+		Get(opts.PortalGetSkykeyPath).
+		Reply(200).
+		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
+
+	fullSkykey, err = skynet.GetSkykey("", id, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedSkykey = skynet.Skykey{
+		Skykey: skykey,
+		Name:   name,
+		ID:     id,
+		Type:   skykeyType,
+	}
+	if !reflect.DeepEqual(expectedSkykey, fullSkykey) {
+		t.Fatalf("expected skykey %v, got %v", expectedSkykey, fullSkykey)
+	}
 
 	// Verify we don't have pending mocks.
 	if !gock.IsDone() {
