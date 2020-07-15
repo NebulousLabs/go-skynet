@@ -37,6 +37,15 @@ type (
 		CustomUserAgent string
 	}
 
+	// EncryptionOptions contains options used for encrypting uploads and
+	// decrypting downloads.
+	EncryptionOptions struct {
+		// SkykeyName is the name of the skykey used to encrypt the upload.
+		SkykeyName string
+		// SkykeyID is the ID of the skykey used to encrypt the upload.
+		SkykeyID string
+	}
+
 	// AddSkykeyOptions contains the options used for addskykey.
 	AddSkykeyOptions struct {
 		ConnectionOptions
@@ -69,6 +78,8 @@ type (
 	// DownloadOptions contains the options used for downloads.
 	DownloadOptions struct {
 		ConnectionOptions
+		EncryptionOptions
+
 		// PortalDownloadPath is the relative URL path of the download endpoint.
 		PortalDownloadPath string
 	}
@@ -76,6 +87,7 @@ type (
 	// UploadOptions contains the options used for uploads.
 	UploadOptions struct {
 		ConnectionOptions
+		EncryptionOptions
 
 		// PortalUploadPath is the relative URL path of the upload endpoint.
 		PortalUploadPath string
@@ -93,11 +105,6 @@ type (
 		// the base name of the directory being uploaded will be used by
 		// default.
 		CustomDirname string
-
-		// SkykeyName is the name of the skykey used to encrypt the upload.
-		SkykeyName string
-		// SkykeyID is the ID of the skykey used to encrypt the upload.
-		SkykeyID string
 	}
 
 	// Response structs
@@ -402,6 +409,10 @@ func UploadDirectory(path string, opts UploadOptions) (string, error) {
 func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
 	url := makeURL(opts.PortalURL, opts.PortalDownloadPath)
 	url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimPrefix(skylink, "sia://"))
+
+	// Include the skykey name or id, if given.
+	url = fmt.Sprintf("%s?skykeyname=%s", url, opts.SkykeyName)
+	url = fmt.Sprintf("%s&skykeyid=%s", url, opts.SkykeyID)
 
 	resp, err := executeRequest(opts.ConnectionOptions, "GET", url, &bytes.Buffer{})
 	if err != nil {

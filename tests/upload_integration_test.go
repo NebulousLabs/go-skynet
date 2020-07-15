@@ -101,7 +101,7 @@ func TestUploadFileSkykey(t *testing.T) {
 	const skykeyName = "testcreateskykey"
 	const skykeyID = "pJAPPfWkWXpss3BvMDCJCw=="
 
-	// Test uploading a file with a custom filename.
+	// Test uploading a file with a skykey name set.
 
 	opts := skynet.DefaultUploadOptions
 	opts.SkykeyName = skykeyName
@@ -118,6 +118,8 @@ func TestUploadFileSkykey(t *testing.T) {
 	if sialink2 != sialink {
 		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
 	}
+
+	// Test uploading a file with a skykey id set.
 
 	opts = skynet.DefaultUploadOptions
 	opts.SkykeyID = skykeyID
