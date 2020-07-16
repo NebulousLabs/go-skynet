@@ -86,7 +86,7 @@ func TestGetSkykey(t *testing.T) {
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
-	fullSkykey, err := skynet.GetSkykey(name, "", opts)
+	fullSkykey, err := skynet.GetSkykeyByName(name, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestGetSkykey(t *testing.T) {
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
-	fullSkykey, err = skynet.GetSkykey("", id, opts)
+	fullSkykey, err = skynet.GetSkykeyByID(id, opts)
 	if err != nil {
 		t.Fatal(err)
 	}

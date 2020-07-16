@@ -225,12 +225,36 @@ func CreateSkykey(name, skykeyType string, opts CreateSkykeyOptions) (Skykey, er
 	return Skykey(apiResponse), nil
 }
 
-// GetSkykey returns the given skykey. One of either name or id must be provided
-// -- the one that is not provided should be left blank.
-func GetSkykey(name, id string, opts GetSkykeyOptions) (Skykey, error) {
+// GetSkykeyByName returns the given skykey given its name.
+func GetSkykeyByName(name string, opts GetSkykeyOptions) (Skykey, error) {
 	body := &bytes.Buffer{}
 	url := makeURL(opts.PortalURL, opts.PortalGetSkykeyPath)
-	url = fmt.Sprintf("%s?name=%s&id=%s", url, name, id)
+	url = fmt.Sprintf("%s?name=%s", url, name)
+
+	resp, err := executeRequest(opts.ConnectionOptions, "GET", url, body)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not execute request")
+	}
+
+	respBody, err := parseResponseBody(resp)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not parse response body")
+	}
+
+	var apiResponse GetSkykeyResponse
+	err = json.Unmarshal(respBody.Bytes(), &apiResponse)
+	if err != nil {
+		return Skykey{}, errors.AddContext(err, "could not unmarshal response JSON")
+	}
+
+	return Skykey(apiResponse), nil
+}
+
+// GetSkykeyByID returns the given skykey given its ID.
+func GetSkykeyByID(id string, opts GetSkykeyOptions) (Skykey, error) {
+	body := &bytes.Buffer{}
+	url := makeURL(opts.PortalURL, opts.PortalGetSkykeyPath)
+	url = fmt.Sprintf("%s?id=%s", url, id)
 
 	resp, err := executeRequest(opts.ConnectionOptions, "GET", url, body)
 	if err != nil {
