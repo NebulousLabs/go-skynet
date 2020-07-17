@@ -1,21 +1,21 @@
 package skynet
 
 type (
-	// GetStatisticsOptions contains the options used for get statistics.
-	GetStatisticsOptions struct {
+	// GetStatsOptions contains the options used for get stats.
+	GetStatsOptions struct {
 		Options
 	}
 )
 
 var (
-	// DefaultGetStatisticsOptions contains the default get statistics options.
-	DefaultGetStatisticsOptions = GetStatisticsOptions{
+	// DefaultGetStatsOptions contains the default get stats options.
+	DefaultGetStatsOptions = GetStatsOptions{
 		Options: DefaultOptions("/skynet/stats"),
 	}
 )
 
-// GetStatistics returns statistical information about Skynet, e.g. number of
+// GetStats returns statistical information about Skynet, e.g. number of
 // files uplaoded.
-func GetStatistics(opts GetStatisticsOptions) error {
+func GetStats(opts GetStatsOptions) error {
 	panic("Not implemented")
 }
