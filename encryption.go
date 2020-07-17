@@ -38,8 +38,8 @@ type (
 	GetSkykeyOptions struct {
 		Options
 	}
-	// ListSkykeysOptions contains the options used for skykeys GET.
-	ListSkykeysOptions struct {
+	// GetSkykeysOptions contains the options used for skykeys GET.
+	GetSkykeysOptions struct {
 		Options
 	}
 
@@ -47,8 +47,8 @@ type (
 	CreateSkykeyResponse Skykey
 	// GetSkykeyResponse contains the response for getting a skykey.
 	GetSkykeyResponse Skykey
-	// ListSkykeysResponse contains the response for listing skykeys.
-	ListSkykeysResponse struct {
+	// GetSkykeysResponse contains the response for listing skykeys.
+	GetSkykeysResponse struct {
 		// Skykeys is the returned list of skykeys.
 		Skykeys []Skykey `json:"skykeys"`
 	}
@@ -67,8 +67,8 @@ var (
 	DefaultGetSkykeyOptions = GetSkykeyOptions{
 		Options: DefaultOptions("/skynet/skykey"),
 	}
-	// DefaultListSkykeysOptions contains the default skykeys options.
-	DefaultListSkykeysOptions = ListSkykeysOptions{
+	// DefaultGetSkykeysOptions contains the default skykeys options.
+	DefaultGetSkykeysOptions = GetSkykeysOptions{
 		Options: DefaultOptions("/skynet/skykeys"),
 	}
 )
@@ -163,8 +163,8 @@ func GetSkykeyByID(id string, opts GetSkykeyOptions) (Skykey, error) {
 	return Skykey(apiResponse), nil
 }
 
-// ListSkykeys returns a list of all skykeys.
-func ListSkykeys(opts ListSkykeysOptions) ([]Skykey, error) {
+// GetSkykeys returns a list of all skykeys.
+func GetSkykeys(opts GetSkykeysOptions) ([]Skykey, error) {
 	url := makeURL(opts.PortalURL, opts.EndpointPath)
 
 	resp, err := executeRequest(opts.Options, "GET", url, &bytes.Buffer{})
@@ -177,7 +177,7 @@ func ListSkykeys(opts ListSkykeysOptions) ([]Skykey, error) {
 		return nil, errors.AddContext(err, "could not parse response body")
 	}
 
-	var apiResponse ListSkykeysResponse
+	var apiResponse GetSkykeysResponse
 	err = json.Unmarshal(respBody.Bytes(), &apiResponse)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not unmarshal response JSON")
