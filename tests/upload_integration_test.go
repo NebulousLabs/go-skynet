@@ -29,7 +29,7 @@ func TestUploadFile(t *testing.T) {
 	// Upload file request.
 	opts := skynet.DefaultUploadOptions
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
@@ -64,7 +64,7 @@ func TestUploadFileCustomName(t *testing.T) {
 	opts := skynet.DefaultUploadOptions
 	opts.CustomFilename = "foobar"
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
@@ -106,7 +106,7 @@ func TestUploadFileSkykey(t *testing.T) {
 	opts := skynet.DefaultUploadOptions
 	opts.SkykeyName = skykeyName
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		MatchParam("skykeyname", skykeyName).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
@@ -124,7 +124,7 @@ func TestUploadFileSkykey(t *testing.T) {
 	opts = skynet.DefaultUploadOptions
 	opts.SkykeyID = skykeyID
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		MatchParam("skykeyid", skykeyID).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
@@ -158,7 +158,7 @@ func TestUploadDirectory(t *testing.T) {
 
 	opts := skynet.DefaultUploadOptions
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		MatchParam("filename", filename).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
@@ -213,7 +213,7 @@ func TestUploadDirectoryCustomName(t *testing.T) {
 	opts := skynet.DefaultUploadOptions
 	opts.CustomDirname = "barfoo"
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		MatchParam("filename", "barfoo").
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
@@ -258,7 +258,7 @@ func TestUploadDirectorySkykey(t *testing.T) {
 	opts := skynet.DefaultUploadOptions
 	opts.SkykeyName = skykeyName
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		MatchParam("filename", filename).
 		MatchParam("skykeyname", skykeyName).
 		Reply(200).
@@ -285,7 +285,7 @@ func TestUploadDirectorySkykey(t *testing.T) {
 	opts = skynet.DefaultUploadOptions
 	opts.SkykeyID = skykeyID
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalUploadPath).
+		Post(opts.EndpointPath).
 		MatchParam("filename", filename).
 		MatchParam("skykeyid", skykeyID).
 		Reply(200).

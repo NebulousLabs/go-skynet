@@ -16,7 +16,7 @@ func TestAddSkykey(t *testing.T) {
 
 	opts := skynet.DefaultAddSkykeyOptions
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalAddSkykeyPath).
+		Post(opts.EndpointPath).
 		MatchParam("skykey", skykey).
 		Reply(200)
 
@@ -42,7 +42,7 @@ func TestCreateSkykey(t *testing.T) {
 
 	opts := skynet.DefaultCreateSkykeyOptions
 	gock.New(skynet.DefaultPortalURL).
-		Post(opts.PortalCreateSkykeyPath).
+		Post(opts.EndpointPath).
 		MatchParam("name", name).
 		MatchParam("type", skykeyType).
 		Reply(200).
@@ -82,7 +82,7 @@ func TestGetSkykey(t *testing.T) {
 
 	opts := skynet.DefaultGetSkykeyOptions
 	gock.New(skynet.DefaultPortalURL).
-		Get(opts.PortalGetSkykeyPath).
+		Get(opts.EndpointPath).
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
@@ -104,7 +104,7 @@ func TestGetSkykey(t *testing.T) {
 	// Get by ID
 
 	gock.New(skynet.DefaultPortalURL).
-		Get(opts.PortalGetSkykeyPath).
+		Get(opts.EndpointPath).
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
@@ -129,8 +129,8 @@ func TestGetSkykey(t *testing.T) {
 	}
 }
 
-// TestListSkykeys tests listing skykeys.
-func TestListSkykeys(t *testing.T) {
+// TestGetSkykeys tests listing skykeys.
+func TestGetSkykeys(t *testing.T) {
 	defer gock.Off()
 
 	skykey1 := skynet.Skykey{
@@ -145,13 +145,13 @@ func TestListSkykeys(t *testing.T) {
 	}
 	response := []skynet.Skykey{skykey1, skykey2}
 
-	opts := skynet.DefaultListSkykeysOptions
+	opts := skynet.DefaultGetSkykeysOptions
 	gock.New(skynet.DefaultPortalURL).
-		Get(opts.PortalListSkykeysPath).
+		Get(opts.EndpointPath).
 		Reply(200).
 		JSON(map[string][]skynet.Skykey{"skykeys": response})
 
-	skykeys, err := skynet.ListSkykeys(opts)
+	skykeys, err := skynet.GetSkykeys(opts)
 	if err != nil {
 		t.Fatal(err)
 	}
