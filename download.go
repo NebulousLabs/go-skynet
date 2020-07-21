@@ -27,6 +27,9 @@ var (
 	// DefaultDownloadOptions contains the default download options.
 	DefaultDownloadOptions = DownloadOptions{
 		Options: DefaultOptions("/"),
+
+		SkykeyName: "",
+		SkykeyID:   "",
 	}
 )
 
