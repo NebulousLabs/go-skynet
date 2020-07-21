@@ -17,15 +17,6 @@ type (
 		Type   string `json:"type"`
 	}
 
-	// EncryptionOptions contains options used for encrypting uploads and
-	// decrypting downloads.
-	EncryptionOptions struct {
-		// SkykeyName is the name of the skykey used to encrypt the upload.
-		SkykeyName string
-		// SkykeyID is the ID of the skykey used to encrypt the upload.
-		SkykeyID string
-	}
-
 	// AddSkykeyOptions contains the options used for addskykey.
 	AddSkykeyOptions struct {
 		Options

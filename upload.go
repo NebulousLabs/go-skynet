@@ -22,8 +22,6 @@ type (
 	UploadOptions struct {
 		Options
 
-		EncryptionOptions
-
 		// PortalFileFieldName is the fieldName for files on the portal.
 		PortalFileFieldName string
 		// PortalDirectoryFileFieldName is the fieldName for directory files on
@@ -38,6 +36,11 @@ type (
 		// the base name of the directory being uploaded will be used by
 		// default.
 		CustomDirname string
+
+		// SkykeyName is the name of the skykey used to encrypt the upload.
+		SkykeyName string
+		// SkykeyID is the ID of the skykey used to encrypt the upload.
+		SkykeyID string
 	}
 
 	// UploadResponse contains the response for uploads.
