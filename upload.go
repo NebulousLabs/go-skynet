@@ -57,6 +57,10 @@ var (
 
 		PortalFileFieldName:          "file",
 		PortalDirectoryFileFieldName: "files[]",
+		CustomFilename:               "",
+		CustomDirname:                "",
+		SkykeyName:                   "",
+		SkykeyID:                     "",
 	}
 )
 
