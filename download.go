@@ -16,7 +16,10 @@ type (
 	DownloadOptions struct {
 		Options
 
-		EncryptionOptions
+		// SkykeyName is the name of the skykey used to encrypt the upload.
+		SkykeyName string
+		// SkykeyID is the ID of the skykey used to encrypt the upload.
+		SkykeyID string
 	}
 )
 

@@ -25,11 +25,11 @@ type (
 	Options struct {
 		// PortalURL is the URL of the portal to use.
 		PortalURL string
-		// CustomUserAgent is the custom user agent to use.
-		CustomUserAgent string
 		// EndpointPath is the relative URL path of the portal endpoint to
 		// contact.
 		EndpointPath string
+		// CustomUserAgent is the custom user agent to use.
+		CustomUserAgent string
 	}
 )
 
