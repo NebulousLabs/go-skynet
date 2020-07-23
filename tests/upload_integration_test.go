@@ -47,6 +47,39 @@ func TestUploadFile(t *testing.T) {
 	}
 }
 
+// TestUploadFileWithAPIKey tests uploading a single file with authentication.
+func TestUploadFileWithAPIKey(t *testing.T) {
+	defer gock.Off() // Flush pending mocks after test execution
+
+	const srcFile = "../testdata/file1.txt"
+	const skylink = "testskynet"
+	const sialink = skynet.URISkynetPrefix + skylink
+
+	// Test uploading a file.
+
+	// Upload file request.
+	opts := skynet.DefaultUploadOptions
+	opts.APIKey = "foobar"
+	gock.New(skynet.DefaultPortalURL).
+		Post(opts.EndpointPath).
+		MatchHeader("Authorization", "Basic OmZvb2Jhcg==").
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	sialink2, err := skynet.UploadFile(srcFile, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Verify we don't have pending mocks.
+	if !gock.IsDone() {
+		t.Fatal("test finished with pending mocks")
+	}
+}
+
 // TestUploadFileCustomName tests uploading a single file with a custom
 // filename.
 func TestUploadFileCustomName(t *testing.T) {

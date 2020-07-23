@@ -28,6 +28,8 @@ type (
 		// EndpointPath is the relative URL path of the portal endpoint to
 		// contact.
 		EndpointPath string
+		// APIKey is the API password to use for authentication.
+		APIKey string
 		// CustomUserAgent is the custom user agent to use.
 		CustomUserAgent string
 	}
@@ -54,14 +56,17 @@ func DefaultOptions(endpointPath string) Options {
 	}
 }
 
-// executeRequest makes and executes a request given the ConnectionOptions.
-func executeRequest(copts Options, method, url string, reqBody io.Reader) (*http.Response, error) {
+// executeRequest makes and executes a request given the Options.
+func executeRequest(opts Options, method, url string, reqBody io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
 		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
 	}
-	if copts.CustomUserAgent != "" {
-		req.Header.Set("User-Agent", copts.CustomUserAgent)
+	if opts.APIKey != "" {
+		req.SetBasicAuth("", opts.APIKey)
+	}
+	if opts.CustomUserAgent != "" {
+		req.Header.Set("User-Agent", opts.CustomUserAgent)
 	}
 
 	// Execute the request.
