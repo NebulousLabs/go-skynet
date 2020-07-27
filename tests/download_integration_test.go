@@ -16,7 +16,7 @@ func TestDownloadFile(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
 	const srcFile = "../testdata/file1.txt"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
 	file, err := ioutil.TempFile("", t.Name())
@@ -64,7 +64,7 @@ func TestDownloadFileSkykey(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
 	const srcFile = "../testdata/file1.txt"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 	const skykeyName = "testcreateskykey"
 	const skykeyID = "pJAPPfWkWXpss3BvMDCJCw=="
