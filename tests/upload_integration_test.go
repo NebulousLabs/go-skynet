@@ -14,7 +14,7 @@ func TestUploadFile(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
 	const srcFile = "../testdata/file1.txt"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
 	// Test that uploading a nonexistent file fails.
@@ -52,7 +52,7 @@ func TestUploadFileWithAPIKey(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
 	const srcFile = "../testdata/file1.txt"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
 	// Test uploading a file.
@@ -87,7 +87,7 @@ func TestUploadFileCustomName(t *testing.T) {
 	gock.Observe(interceptRequest)
 
 	const srcFile = "../testdata/file1.txt"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
 	// Test uploading a file with a custom filename.
@@ -129,7 +129,7 @@ func TestUploadFileSkykey(t *testing.T) {
 	defer gock.Off()
 
 	const srcFile = "../testdata/file1.txt"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 	const skykeyName = "testcreateskykey"
 	const skykeyID = "pJAPPfWkWXpss3BvMDCJCw=="
@@ -182,7 +182,7 @@ func TestUploadDirectory(t *testing.T) {
 	gock.Observe(interceptRequest)
 
 	const srcDir = "../testdata"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
 	filename := filepath.Base(srcDir)
@@ -238,7 +238,7 @@ func TestUploadDirectoryCustomName(t *testing.T) {
 	gock.Observe(interceptRequest)
 
 	const srcDir = "../testdata"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
 	// Upload a directory with a custom dirname.
@@ -279,7 +279,7 @@ func TestUploadDirectorySkykey(t *testing.T) {
 	defer gock.Off()
 
 	const srcDir = "../testdata"
-	const skylink = "testskynet"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 	const skykeyName = "testcreateskykey"
 	const skykeyID = "pJAPPfWkWXpss3BvMDCJCw=="
