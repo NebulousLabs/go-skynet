@@ -21,6 +21,11 @@ type (
 		// SkykeyID is the ID of the skykey used to encrypt the upload.
 		SkykeyID string
 	}
+
+	// MetadataOptions contains the options used for getting metadata.
+	MetadataOptions struct {
+		Options
+	}
 )
 
 var (
@@ -30,6 +35,11 @@ var (
 
 		SkykeyName: "",
 		SkykeyID:   "",
+	}
+
+	// DefaultMetadataOptions contains the default getting metadata options.
+	DefaultMetadataOptions = MetadataOptions{
+		Options: DefaultOptions("/"),
 	}
 )
 
@@ -72,4 +82,9 @@ func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 
 	_, err = io.Copy(out, downloadData)
 	return errors.AddContext(err, "could not copy data to file at "+path)
+}
+
+// Metadata downloads metadata from the given skylink.
+func Metadata(skylink string, opts MetadataOptions) error {
+	panic("Not implemented")
 }
