@@ -18,9 +18,9 @@ func TestUploadFile(t *testing.T) {
 	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
-	// Test that uploading a nonexistent file fails.
-
 	interceptedRequest = ""
+
+	// Test that uploading a nonexistent file fails.
 
 	_, err := skynet.UploadFile("this-should-not-exist.txt", skynet.DefaultUploadOptions)
 	if !strings.Contains(err.Error(), "no such file or directory") {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,11 +113,13 @@ func makeResponseError(resp *http.Response) error {
 }
 
 // makeURL makes a URL from the given parts.
-//
-// TODO: Make more generic. Take `query` parameter that is a url.Values map (can
-// be nil).
-func makeURL(portalURL, portalPath string) string {
-	return fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(portalPath, "/"))
+func makeURL(portalURL, path string, query url.Values) string {
+	url := fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(path, "/"))
+	if query != nil {
+		url = fmt.Sprintf("%s?%s", url, query.Encode())
+	}
+
+	return url
 }
 
 // parseResponseBody parses the response body.

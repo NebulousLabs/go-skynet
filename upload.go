@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/url"
 	"os"
 	gopath "path"
 	"path/filepath"
@@ -70,8 +71,6 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	url := makeURL(opts.PortalURL, opts.EndpointPath)
-
 	var fieldname string
 	var filename string
 	if len(uploadData) == 1 {
@@ -83,13 +82,12 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 		fieldname = opts.PortalDirectoryFileFieldName
 		filename = opts.CustomDirname
 	}
-	// The filename is set first and handles including ? in the url string. All
-	// subsequent parameters should include an &.
-	url = fmt.Sprintf("%s?filename=%s", url, filename)
 
-	// Include the skykey name or id, if given.
-	url = fmt.Sprintf("%s&skykeyname=%s", url, opts.SkykeyName)
-	url = fmt.Sprintf("%s&skykeyid=%s", url, opts.SkykeyID)
+	values := url.Values{}
+	values.Set("filename", filename)
+	values.Set("skykeyname", opts.SkykeyName)
+	values.Set("skykeyid", opts.SkykeyID)
+	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
 	for filename, data := range uploadData {
 		part, err := writer.CreateFormFile(fieldname, filename)
