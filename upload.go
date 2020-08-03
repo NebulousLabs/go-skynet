@@ -104,7 +104,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	if err != nil {
 		return "", errors.AddContext(err, "could not close writer")
 	}
-	opts.CustomContentType = writer.FormDataContentType()
+	opts.customContentType = writer.FormDataContentType()
 
 	resp, err := executeRequest("POST", url, body, opts.Options)
 	if err != nil {

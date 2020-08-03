@@ -32,10 +32,11 @@ type (
 
 		// APIKey is the API password to use for authentication.
 		APIKey string
-		// CustomContentType is the custom content type to use.
-		CustomContentType string
 		// CustomUserAgent is the custom user agent to use.
 		CustomUserAgent string
+
+		// customContentType is the custom content type to use. Set internally.
+		customContentType string
 	}
 )
 
@@ -72,8 +73,8 @@ func executeRequest(method, url string, reqBody io.Reader, opts Options) (*http.
 	if opts.CustomUserAgent != "" {
 		req.Header.Set("User-Agent", opts.CustomUserAgent)
 	}
-	if opts.CustomContentType != "" {
-		req.Header.Set("Content-Type", opts.CustomContentType)
+	if opts.customContentType != "" {
+		req.Header.Set("Content-Type", opts.customContentType)
 	}
 
 	// Execute the request.
