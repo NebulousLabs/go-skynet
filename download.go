@@ -46,13 +46,13 @@ var (
 // Download downloads generic data.
 func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
 	url := makeURL(opts.PortalURL, opts.EndpointPath)
-	url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimPrefix(skylink, "sia://"))
+	url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimPrefix(skylink, URISkynetPrefix))
 
 	// Include the skykey name or id, if given.
 	url = fmt.Sprintf("%s?skykeyname=%s", url, opts.SkykeyName)
 	url = fmt.Sprintf("%s&skykeyid=%s", url, opts.SkykeyID)
 
-	resp, err := executeRequest(opts.Options, "GET", url, &bytes.Buffer{})
+	resp, err := executeRequest("GET", url, &bytes.Buffer{}, opts.Options)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute request")
 	}

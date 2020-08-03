@@ -106,8 +106,9 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	if err != nil {
 		return "", errors.AddContext(err, "could not close writer")
 	}
+	opts.CustomContentType = writer.FormDataContentType()
 
-	resp, err := executeRequest(opts.Options, "POST", url, body)
+	resp, err := executeRequest("POST", url, body, opts.Options)
 	if err != nil {
 		return "", errors.AddContext(err, "could not execute request")
 	}
@@ -123,7 +124,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 		return "", errors.AddContext(err, "could not unmarshal response JSON")
 	}
 
-	return fmt.Sprintf("sia://%s", apiResponse.Skylink), nil
+	return fmt.Sprintf("%s%s", URISkynetPrefix, apiResponse.Skylink), nil
 }
 
 // UploadFile uploads a file to Skynet.

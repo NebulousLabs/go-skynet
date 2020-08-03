@@ -12,12 +12,15 @@ import (
 // TestUploadFile tests uploading a single file.
 func TestUploadFile(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
+	gock.Observe(interceptRequest)
 
 	const srcFile = "../testdata/file1.txt"
 	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
 	const sialink = skynet.URISkynetPrefix + skylink
 
 	// Test that uploading a nonexistent file fails.
+
+	interceptedRequest = ""
 
 	_, err := skynet.UploadFile("this-should-not-exist.txt", skynet.DefaultUploadOptions)
 	if !strings.Contains(err.Error(), "no such file or directory") {
@@ -39,6 +42,11 @@ func TestUploadFile(t *testing.T) {
 	}
 	if sialink2 != sialink {
 		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Check that the content type is set.
+	if !strings.Contains(interceptedRequest, "Content-Type: multipart/form-data;") {
+		t.Fatal("Content-Type header incorrect")
 	}
 
 	// Verify we don't have pending mocks.
@@ -224,6 +232,11 @@ func TestUploadDirectory(t *testing.T) {
 
 	if sialink2 != sialink {
 		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Check that the content type is set.
+	if !strings.Contains(interceptedRequest, "Content-Type: multipart/form-data;") {
+		t.Fatal("Content-Type header incorrect")
 	}
 
 	// Verify we don't have pending mocks.

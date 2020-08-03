@@ -28,8 +28,11 @@ type (
 		// EndpointPath is the relative URL path of the portal endpoint to
 		// contact.
 		EndpointPath string
+
 		// APIKey is the API password to use for authentication.
 		APIKey string
+		// CustomContentType is the custom content type to use.
+		CustomContentType string
 		// CustomUserAgent is the custom user agent to use.
 		CustomUserAgent string
 	}
@@ -57,7 +60,7 @@ func DefaultOptions(endpointPath string) Options {
 }
 
 // executeRequest makes and executes a request given the Options.
-func executeRequest(opts Options, method, url string, reqBody io.Reader) (*http.Response, error) {
+func executeRequest(method, url string, reqBody io.Reader, opts Options) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
 		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
@@ -67,6 +70,9 @@ func executeRequest(opts Options, method, url string, reqBody io.Reader) (*http.
 	}
 	if opts.CustomUserAgent != "" {
 		req.Header.Set("User-Agent", opts.CustomUserAgent)
+	}
+	if opts.CustomContentType != "" {
+		req.Header.Set("Content-Type", opts.CustomContentType)
 	}
 
 	// Execute the request.
@@ -106,6 +112,9 @@ func makeResponseError(resp *http.Response) error {
 }
 
 // makeURL makes a URL from the given parts.
+//
+// TODO: Make more generic. Take `query` parameter that is a url.Values map (can
+// be nil).
 func makeURL(portalURL, portalPath string) string {
 	return fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(portalPath, "/"))
 }

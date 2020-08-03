@@ -70,7 +70,7 @@ func AddSkykey(skykey string, opts AddSkykeyOptions) error {
 	url := makeURL(opts.PortalURL, opts.EndpointPath)
 	url = fmt.Sprintf("%s?skykey=%s", url, skykey)
 
-	_, err := executeRequest(opts.Options, "POST", url, body)
+	_, err := executeRequest("POST", url, body, opts.Options)
 	if err != nil {
 		return errors.AddContext(err, "could not execute request")
 	}
@@ -85,7 +85,7 @@ func CreateSkykey(name, skykeyType string, opts CreateSkykeyOptions) (Skykey, er
 	url := makeURL(opts.PortalURL, opts.EndpointPath)
 	url = fmt.Sprintf("%s?name=%s&type=%s", url, name, skykeyType)
 
-	resp, err := executeRequest(opts.Options, "POST", url, body)
+	resp, err := executeRequest("POST", url, body, opts.Options)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
@@ -110,7 +110,7 @@ func GetSkykeyByName(name string, opts GetSkykeyOptions) (Skykey, error) {
 	url := makeURL(opts.PortalURL, opts.EndpointPath)
 	url = fmt.Sprintf("%s?name=%s", url, name)
 
-	resp, err := executeRequest(opts.Options, "GET", url, body)
+	resp, err := executeRequest("GET", url, body, opts.Options)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
@@ -135,7 +135,7 @@ func GetSkykeyByID(id string, opts GetSkykeyOptions) (Skykey, error) {
 	url := makeURL(opts.PortalURL, opts.EndpointPath)
 	url = fmt.Sprintf("%s?id=%s", url, id)
 
-	resp, err := executeRequest(opts.Options, "GET", url, body)
+	resp, err := executeRequest("GET", url, body, opts.Options)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
@@ -158,7 +158,7 @@ func GetSkykeyByID(id string, opts GetSkykeyOptions) (Skykey, error) {
 func GetSkykeys(opts GetSkykeysOptions) ([]Skykey, error) {
 	url := makeURL(opts.PortalURL, opts.EndpointPath)
 
-	resp, err := executeRequest(opts.Options, "GET", url, &bytes.Buffer{})
+	resp, err := executeRequest("GET", url, &bytes.Buffer{}, opts.Options)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute request")
 	}
