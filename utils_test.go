@@ -1,8 +1,64 @@
 package skynet
 
 import (
+	"net/url"
 	"testing"
 )
+
+const (
+	portalURL = DefaultPortalURL
+)
+
+// TestMakeURL tests making URLs.
+func TestMakeURL(t *testing.T) {
+	values1 := url.Values{}
+	values2 := url.Values{}
+	values2.Set("foo", "bar")
+	values2.Set("bar", "foo")
+	tests := []struct {
+		url, path string
+		values    url.Values
+		out       string
+	}{
+		{
+			portalURL, "test",
+			nil,
+			portalURL + "/test",
+		},
+		{
+			portalURL, "test",
+			values1,
+			portalURL + "/test",
+		},
+		{
+			portalURL, "/",
+			nil,
+			portalURL + "/",
+		},
+		{
+			portalURL + "/test", "skylink",
+			nil,
+			portalURL + "/test/skylink",
+		},
+		{
+			portalURL, "skynet/skyfile",
+			values2,
+			portalURL + "/skynet/skyfile?bar=foo&foo=bar",
+		},
+		{
+			portalURL, "//test/",
+			values2,
+			portalURL + "/test/?bar=foo&foo=bar",
+		},
+	}
+
+	for _, test := range tests {
+		url := makeURL(test.url, test.path, test.values)
+		if url != test.out {
+			t.Fatalf("expected %v, got %v", test.out, url)
+		}
+	}
+}
 
 // TestWalkDirectory tests directory walking.
 func TestWalkDirectory(t *testing.T) {

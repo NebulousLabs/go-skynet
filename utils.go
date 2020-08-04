@@ -116,11 +116,14 @@ func makeResponseError(resp *http.Response) error {
 // makeURL makes a URL from the given parts.
 func makeURL(portalURL, path string, query url.Values) string {
 	url := fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(path, "/"))
-	if query != nil {
-		url = fmt.Sprintf("%s?%s", url, query.Encode())
+	if query == nil {
+		return url
 	}
-
-	return url
+	params := query.Encode()
+	if params == "" {
+		return url
+	}
+	return fmt.Sprintf("%s?%s", url, query.Encode())
 }
 
 // parseResponseBody parses the response body.
