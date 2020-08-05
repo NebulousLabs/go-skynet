@@ -3,7 +3,7 @@ package skynet
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"net/url"
 
 	"gitlab.com/NebulousLabs/errors"
 )
@@ -67,10 +67,11 @@ var (
 // AddSkykey stores the given base-64 encoded skykey with the skykey manager.
 func AddSkykey(skykey string, opts AddSkykeyOptions) error {
 	body := &bytes.Buffer{}
-	url := makeURL(opts.PortalURL, opts.EndpointPath)
-	url = fmt.Sprintf("%s?skykey=%s", url, skykey)
+	values := url.Values{}
+	values.Set("skykey", skykey)
+	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
-	_, err := executeRequest(opts.Options, "POST", url, body)
+	_, err := executeRequest("POST", url, body, opts.Options)
 	if err != nil {
 		return errors.AddContext(err, "could not execute request")
 	}
@@ -82,10 +83,12 @@ func AddSkykey(skykey string, opts AddSkykeyOptions) error {
 // with the given type. skykeyType can be either "public-id" or "private-id".
 func CreateSkykey(name, skykeyType string, opts CreateSkykeyOptions) (Skykey, error) {
 	body := &bytes.Buffer{}
-	url := makeURL(opts.PortalURL, opts.EndpointPath)
-	url = fmt.Sprintf("%s?name=%s&type=%s", url, name, skykeyType)
+	values := url.Values{}
+	values.Set("name", name)
+	values.Set("type", skykeyType)
+	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
-	resp, err := executeRequest(opts.Options, "POST", url, body)
+	resp, err := executeRequest("POST", url, body, opts.Options)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
@@ -107,10 +110,11 @@ func CreateSkykey(name, skykeyType string, opts CreateSkykeyOptions) (Skykey, er
 // GetSkykeyByName returns the given skykey given its name.
 func GetSkykeyByName(name string, opts GetSkykeyOptions) (Skykey, error) {
 	body := &bytes.Buffer{}
-	url := makeURL(opts.PortalURL, opts.EndpointPath)
-	url = fmt.Sprintf("%s?name=%s", url, name)
+	values := url.Values{}
+	values.Set("name", name)
+	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
-	resp, err := executeRequest(opts.Options, "GET", url, body)
+	resp, err := executeRequest("GET", url, body, opts.Options)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
@@ -132,10 +136,11 @@ func GetSkykeyByName(name string, opts GetSkykeyOptions) (Skykey, error) {
 // GetSkykeyByID returns the given skykey given its ID.
 func GetSkykeyByID(id string, opts GetSkykeyOptions) (Skykey, error) {
 	body := &bytes.Buffer{}
-	url := makeURL(opts.PortalURL, opts.EndpointPath)
-	url = fmt.Sprintf("%s?id=%s", url, id)
+	values := url.Values{}
+	values.Set("id", id)
+	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
-	resp, err := executeRequest(opts.Options, "GET", url, body)
+	resp, err := executeRequest("GET", url, body, opts.Options)
 	if err != nil {
 		return Skykey{}, errors.AddContext(err, "could not execute request")
 	}
@@ -156,9 +161,9 @@ func GetSkykeyByID(id string, opts GetSkykeyOptions) (Skykey, error) {
 
 // GetSkykeys returns a list of all skykeys.
 func GetSkykeys(opts GetSkykeysOptions) ([]Skykey, error) {
-	url := makeURL(opts.PortalURL, opts.EndpointPath)
+	url := makeURL(opts.PortalURL, opts.EndpointPath, nil)
 
-	resp, err := executeRequest(opts.Options, "GET", url, &bytes.Buffer{})
+	resp, err := executeRequest("GET", url, &bytes.Buffer{}, opts.Options)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute request")
 	}

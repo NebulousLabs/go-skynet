@@ -2,8 +2,8 @@ package skynet
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"net/url"
 	"os"
 	gopath "path"
 	"strings"
@@ -45,14 +45,13 @@ var (
 
 // Download downloads generic data.
 func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
-	url := makeURL(opts.PortalURL, opts.EndpointPath)
-	url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimPrefix(skylink, "sia://"))
+	values := url.Values{}
+	values.Set("skykeyname", opts.SkykeyName)
+	values.Set("skykeyid", opts.SkykeyID)
+	url := makeURL(opts.PortalURL, opts.EndpointPath, nil)
+	url = makeURL(url, strings.TrimPrefix(skylink, URISkynetPrefix), values)
 
-	// Include the skykey name or id, if given.
-	url = fmt.Sprintf("%s?skykeyname=%s", url, opts.SkykeyName)
-	url = fmt.Sprintf("%s&skykeyid=%s", url, opts.SkykeyID)
-
-	resp, err := executeRequest(opts.Options, "GET", url, &bytes.Buffer{})
+	resp, err := executeRequest("GET", url, &bytes.Buffer{}, opts.Options)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute request")
 	}

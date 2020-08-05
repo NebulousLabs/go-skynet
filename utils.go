@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,10 +29,14 @@ type (
 		// EndpointPath is the relative URL path of the portal endpoint to
 		// contact.
 		EndpointPath string
+
 		// APIKey is the API password to use for authentication.
 		APIKey string
 		// CustomUserAgent is the custom user agent to use.
 		CustomUserAgent string
+
+		// customContentType is the custom content type to use. Set internally.
+		customContentType string
 	}
 )
 
@@ -57,7 +62,7 @@ func DefaultOptions(endpointPath string) Options {
 }
 
 // executeRequest makes and executes a request given the Options.
-func executeRequest(opts Options, method, url string, reqBody io.Reader) (*http.Response, error) {
+func executeRequest(method, url string, reqBody io.Reader, opts Options) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
 		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
@@ -67,6 +72,9 @@ func executeRequest(opts Options, method, url string, reqBody io.Reader) (*http.
 	}
 	if opts.CustomUserAgent != "" {
 		req.Header.Set("User-Agent", opts.CustomUserAgent)
+	}
+	if opts.customContentType != "" {
+		req.Header.Set("Content-Type", opts.customContentType)
 	}
 
 	// Execute the request.
@@ -106,8 +114,16 @@ func makeResponseError(resp *http.Response) error {
 }
 
 // makeURL makes a URL from the given parts.
-func makeURL(portalURL, portalPath string) string {
-	return fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(portalPath, "/"))
+func makeURL(portalURL, path string, query url.Values) string {
+	url := fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(path, "/"))
+	if query == nil {
+		return url
+	}
+	params := query.Encode()
+	if params == "" {
+		return url
+	}
+	return fmt.Sprintf("%s?%s", url, query.Encode())
 }
 
 // parseResponseBody parses the response body.
