@@ -65,8 +65,8 @@ var (
 	}
 )
 
-// Upload uploads the given generic data.
-func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
+// Upload uploads the given generic data and returns the skylink.
+func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err error) {
 	// prepare formdata
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -100,7 +100,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 		}
 	}
 
-	err := writer.Close()
+	err = writer.Close()
 	if err != nil {
 		return "", errors.AddContext(err, "could not close writer")
 	}
@@ -125,7 +125,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (string, error) {
 	return fmt.Sprintf("%s%s", URISkynetPrefix, apiResponse.Skylink), nil
 }
 
-// UploadFile uploads a file to Skynet.
+// UploadFile uploads a file to Skynet and returns the skylink.
 func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	path = gopath.Clean(path)
 
@@ -150,8 +150,8 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	return Upload(uploadData, opts)
 }
 
-// UploadDirectory uploads a local directory to Skynet.
-func UploadDirectory(path string, opts UploadOptions) (string, error) {
+// UploadDirectory uploads a local directory to Skynet and returns the skylink.
+func UploadDirectory(path string, opts UploadOptions) (skylink string, err error) {
 	path = gopath.Clean(path)
 
 	// Verify the given path is a directory.
