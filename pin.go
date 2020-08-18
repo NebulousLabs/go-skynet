@@ -29,11 +29,11 @@ var (
 )
 
 // Pin pins the file associated with this skylink by re-uploading an exact copy.
-func Pin(skylink, destSiaPath string, opts PinOptions) error {
+func (sc *SkynetClient) Pin(skylink, destSiaPath string, opts PinOptions) error {
 	panic("Not implemented")
 }
 
 // Unpin unpins the pinned skyfile or directory at the given siapath.
-func Unpin(siaPath string, opts UnpinOptions) error {
+func (sc *SkynetClient) Unpin(siaPath string, opts UnpinOptions) error {
 	panic("Not implemented")
 }

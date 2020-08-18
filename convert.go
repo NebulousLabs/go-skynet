@@ -15,6 +15,6 @@ var (
 )
 
 // Convert converts an existing siafile to a skyfile and skylink.
-func Convert(srcSiaPath, destSiaPath string, opts ConvertOptions) (string, error) {
+func (sc *SkynetClient) Convert(srcSiaPath, destSiaPath string, opts ConvertOptions) (string, error) {
 	panic("Not implemented")
 }

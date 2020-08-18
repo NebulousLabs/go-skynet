@@ -16,6 +16,6 @@ var (
 
 // GetStats returns statistical information about Skynet, e.g. number of
 // files uplaoded.
-func GetStats(opts GetStatsOptions) error {
+func (sc *SkynetClient) GetStats(opts GetStatsOptions) error {
 	panic("Not implemented")
 }

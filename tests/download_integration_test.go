@@ -36,7 +36,7 @@ func TestDownloadFile(t *testing.T) {
 		BodyString("test\n")
 
 	// Pass the full sialink to verify that the prefix is trimmed.
-	err = skynet.DownloadFile(dstFile, sialink, opts)
+	err = client.DownloadFile(dstFile, sialink, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +87,7 @@ func TestDownloadFileSkykey(t *testing.T) {
 		BodyString("test\n")
 
 	// Pass the full sialink to verify that the prefix is trimmed.
-	err = skynet.DownloadFile(dstFile, sialink, opts)
+	err = client.DownloadFile(dstFile, sialink, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestDownloadFileSkykey(t *testing.T) {
 		BodyString("test\n")
 
 	// Pass the full sialink to verify that the prefix is trimmed.
-	err = skynet.DownloadFile(dstFile, sialink, opts)
+	err = client.DownloadFile(dstFile, sialink, opts)
 	if err != nil {
 		t.Fatal(err)
 	}

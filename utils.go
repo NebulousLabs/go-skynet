@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,8 +23,6 @@ type (
 	// Options contains options used for connecting to a Skynet portal and
 	// endpoint.
 	Options struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
 		// EndpointPath is the relative URL path of the portal endpoint to
 		// contact.
 		EndpointPath string
@@ -56,38 +53,11 @@ var (
 // DefaultOptions returns the default options with the given endpoint path.
 func DefaultOptions(endpointPath string) Options {
 	return Options{
-		PortalURL:    DefaultPortalURL,
 		EndpointPath: endpointPath,
-	}
-}
 
-// executeRequest makes and executes a request given the Options.
-func executeRequest(method, url string, reqBody io.Reader, opts Options) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, reqBody)
-	if err != nil {
-		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
+		APIKey:          "",
+		CustomUserAgent: "",
 	}
-	if opts.APIKey != "" {
-		req.SetBasicAuth("", opts.APIKey)
-	}
-	if opts.CustomUserAgent != "" {
-		req.Header.Set("User-Agent", opts.CustomUserAgent)
-	}
-	if opts.customContentType != "" {
-		req.Header.Set("Content-Type", opts.customContentType)
-	}
-
-	// Execute the request.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, errors.AddContext(err, "could not execute request")
-	}
-	if resp.StatusCode >= 400 {
-		return nil, errors.AddContext(makeResponseError(resp), "error code received")
-	}
-
-	return resp, nil
 }
 
 // makeResponseError makes an error given an error response.

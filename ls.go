@@ -19,6 +19,6 @@ var (
 )
 
 // Ls returns the list of files and/or directories at the given path.
-func Ls(siaPath string, opts LsOptions) error {
+func (sc *SkynetClient) Ls(siaPath string, opts LsOptions) error {
 	panic("Not implemented")
 }

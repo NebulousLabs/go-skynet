@@ -69,7 +69,7 @@ var (
 )
 
 // Upload uploads the given generic data and returns the skylink.
-func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err error) {
+func (sc *SkynetClient) Upload(uploadData UploadData, opts UploadOptions) (skylink string, err error) {
 	// prepare formdata
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -90,7 +90,6 @@ func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err erro
 	values.Set("filename", filename)
 	values.Set("skykeyname", opts.SkykeyName)
 	values.Set("skykeyid", opts.SkykeyID)
-	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
 	for filename, data := range uploadData {
 		// We may need to do a read to determine the Content-Type. Tee the read
@@ -117,7 +116,14 @@ func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err erro
 	}
 	opts.customContentType = writer.FormDataContentType()
 
-	resp, err := executeRequest("POST", url, body, opts.Options)
+	resp, err := sc.executeRequest(
+		requestOptions{
+			Options: opts.Options,
+			method:  "POST",
+			reqBody: body,
+			query:   values,
+		},
+	)
 	if err != nil {
 		return "", errors.AddContext(err, "could not execute request")
 	}
@@ -137,7 +143,7 @@ func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err erro
 }
 
 // UploadFile uploads a file to Skynet and returns the skylink.
-func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
+func (sc *SkynetClient) UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	path = gopath.Clean(path)
 
 	// Open the file.
@@ -158,11 +164,11 @@ func UploadFile(path string, opts UploadOptions) (skylink string, err error) {
 	uploadData := make(UploadData)
 	uploadData[filename] = file
 
-	return Upload(uploadData, opts)
+	return sc.Upload(uploadData, opts)
 }
 
 // UploadDirectory uploads a local directory to Skynet and returns the skylink.
-func UploadDirectory(path string, opts UploadOptions) (skylink string, err error) {
+func (sc *SkynetClient) UploadDirectory(path string, opts UploadOptions) (skylink string, err error) {
 	path = gopath.Clean(path)
 
 	// Verify the given path is a directory.
@@ -202,7 +208,7 @@ func UploadDirectory(path string, opts UploadOptions) (skylink string, err error
 		uploadData[filepath] = file
 	}
 
-	return Upload(uploadData, opts)
+	return sc.Upload(uploadData, opts)
 }
 
 // createFormFileContentType is based on multipart.Writer.CreateFormFile, except

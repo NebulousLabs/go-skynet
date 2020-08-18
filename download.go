@@ -44,14 +44,22 @@ var (
 )
 
 // Download downloads generic data.
-func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
+func (sc *SkynetClient) Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
+	skylink = strings.TrimPrefix(skylink, URISkynetPrefix)
+
 	values := url.Values{}
 	values.Set("skykeyname", opts.SkykeyName)
 	values.Set("skykeyid", opts.SkykeyID)
-	url := makeURL(opts.PortalURL, opts.EndpointPath, nil)
-	url = makeURL(url, strings.TrimPrefix(skylink, URISkynetPrefix), values)
 
-	resp, err := executeRequest("GET", url, &bytes.Buffer{}, opts.Options)
+	resp, err := sc.executeRequest(
+		requestOptions{
+			Options:   opts.Options,
+			method:    "GET",
+			reqBody:   &bytes.Buffer{},
+			extraPath: skylink,
+			query:     values,
+		},
+	)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute request")
 	}
@@ -60,10 +68,10 @@ func Download(skylink string, opts DownloadOptions) (io.ReadCloser, error) {
 }
 
 // DownloadFile downloads a file from Skynet to path.
-func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
+func (sc *SkynetClient) DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 	path = gopath.Clean(path)
 
-	downloadData, err := Download(skylink, opts)
+	downloadData, err := sc.Download(skylink, opts)
 	if err != nil {
 		return errors.AddContext(err, "could not download data")
 	}
@@ -84,6 +92,6 @@ func DownloadFile(path, skylink string, opts DownloadOptions) (err error) {
 }
 
 // Metadata downloads metadata from the given skylink.
-func Metadata(skylink string, opts MetadataOptions) error {
+func (sc *SkynetClient) Metadata(skylink string, opts MetadataOptions) error {
 	panic("Not implemented")
 }

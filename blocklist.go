@@ -26,13 +26,13 @@ var (
 )
 
 // GetBlocklist returns the list of hashed merkleroots that are blocklisted.
-func GetBlocklist(opts GetBlocklistOptions) ([]string, error) {
+func (sc *SkynetClient) GetBlocklist(opts GetBlocklistOptions) ([]string, error) {
 	panic("Not implemented")
 }
 
 // UpdateBlocklist updates the list of skylinks that should be blocklisted from
 // Skynet. This function can be used to both add and remove skylinks from the
 // blocklist.
-func UpdateBlocklist(additions, removals []string, opts UpdateBlocklistOptions) error {
+func (sc *SkynetClient) UpdateBlocklist(additions, removals []string, opts UpdateBlocklistOptions) error {
 	panic("Not implemented")
 }

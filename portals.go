@@ -35,13 +35,13 @@ var (
 )
 
 // GetPortals returns the list of known Skynet portals.
-func GetPortals(opts GetPortalsOptions) ([]Portal, error) {
+func (sc *SkynetClient) GetPortals(opts GetPortalsOptions) ([]Portal, error) {
 	panic("Not implemented")
 }
 
 // UpdatePortals updates the list of known portals. This function can be used to
 // both add and remove portals from the list. Removals are provided in the form
 // of addresses.
-func UpdatePortals(additions []Portal, removals []string, opts UpdatePortalsOptions) error {
+func (sc *SkynetClient) UpdatePortals(additions []Portal, removals []string, opts UpdatePortalsOptions) error {
 	panic("Not implemented")
 }
