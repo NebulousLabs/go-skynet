@@ -84,8 +84,11 @@ func makeResponseError(resp *http.Response) error {
 }
 
 // makeURL makes a URL from the given parts.
-func makeURL(portalURL, path string, query url.Values) string {
+func makeURL(portalURL, path, extraPath string, query url.Values) string {
 	url := fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(path, "/"))
+	if extraPath != "" {
+		url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimLeft(extraPath, "/"))
+	}
 	if query == nil {
 		return url
 	}

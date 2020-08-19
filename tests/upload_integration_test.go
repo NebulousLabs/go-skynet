@@ -104,8 +104,7 @@ func TestUploadCustomUserAgent(t *testing.T) {
 
 	// Test uploading a file with a custom user agent taken from a client.
 
-	client2 := skynet.NewSkynetClient("")
-	client2.SetCustomOptions(skynet.Options{CustomUserAgent: "Sia-Agent"})
+	client2 := skynet.NewCustom("", skynet.Options{CustomUserAgent: "Sia-Agent"})
 
 	// Upload file request.
 	opts := skynet.DefaultUploadOptions

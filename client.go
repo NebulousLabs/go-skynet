@@ -27,20 +27,21 @@ type (
 	}
 )
 
-// NewSkynetClient creates a new Skynet Client which can be used to access Skynet.
+// New creates a new Skynet Client which can be used to access Skynet.
+func New() SkynetClient {
+	return NewCustom("", Options{})
+}
+
+// NewCustom creates a new Skynet Client with a custom portal URL and options.
 // Pass in "" for the portal to let the function select one for you.
-func NewSkynetClient(portalURL string) SkynetClient {
+func NewCustom(portalURL string, customOptions Options) SkynetClient {
 	if portalURL == "" {
 		portalURL = DefaultPortalURL
 	}
 	return SkynetClient{
 		PortalURL: portalURL,
+		Options:   customOptions,
 	}
-}
-
-// SetCustomOptions sets the custom options for this client.
-func (sc *SkynetClient) SetCustomOptions(customOptions Options) {
-	sc.Options = customOptions
 }
 
 // executeRequest makes and executes a request.
@@ -65,8 +66,7 @@ func (sc *SkynetClient) executeRequest(config requestOptions) (*http.Response, e
 	}
 
 	// Make the URL.
-	url = makeURL(url, opts.EndpointPath, nil)
-	url = makeURL(url, config.extraPath, config.query)
+	url = makeURL(url, opts.EndpointPath, config.extraPath, config.query)
 
 	// Create the request.
 	req, err := http.NewRequest(method, url, reqBody)
@@ -84,8 +84,7 @@ func (sc *SkynetClient) executeRequest(config requestOptions) (*http.Response, e
 	}
 
 	// Execute the request.
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not execute request")
 	}

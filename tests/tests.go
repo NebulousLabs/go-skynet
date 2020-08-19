@@ -10,7 +10,7 @@ import (
 
 var (
 	// client is the default Skynet Client to use.
-	client = skynet.NewSkynetClient("")
+	client = skynet.New()
 
 	// interceptRequest is a gock observer function that intercepts requests and
 	// writes them to `interceptedRequest`.
