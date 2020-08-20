@@ -72,6 +72,7 @@ func TestWalkDirectory(t *testing.T) {
 		"testdata/dir1/file3.txt",
 		"testdata/file1.txt",
 		"testdata/file2.txt",
+		"testdata/index.html",
 	}
 
 	if len(files) != len(expectedFiles) {
