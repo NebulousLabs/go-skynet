@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -92,7 +93,9 @@ func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err erro
 	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
 	for filename, data := range uploadData {
-		part, err := createFormFileContentType(writer, fieldname, filename, data)
+		var buf bytes.Buffer
+		tee := io.TeeReader(data, &buf)
+		part, err := createFormFileContentType(writer, fieldname, filename, tee)
 		if err != nil {
 			return "", errors.AddContext(err, fmt.Sprintf("could not create form file for file %v", filename))
 		}
@@ -208,7 +211,7 @@ func createFormFileContentType(w *multipart.Writer, fieldname, filename string, 
 	h.Set("Content-Disposition",
 		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
 			escapeQuotes(fieldname), escapeQuotes(filename)))
-	contentType, err := getFileContentType(file)
+	contentType, err := getFileContentType(filename, file)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +220,12 @@ func createFormFileContentType(w *multipart.Writer, fieldname, filename string, 
 }
 
 // getFileContentType extracts the content type from a given file.
-func getFileContentType(file io.Reader) (string, error) {
+func getFileContentType(filename string, file io.Reader) (string, error) {
+	contentType := mime.TypeByExtension(filepath.Ext(filename))
+	if contentType != "" {
+		return contentType, nil
+	}
+
 	// Only the first 512 bytes are used to sniff the content type.
 	buffer := make([]byte, 512)
 
@@ -228,7 +236,7 @@ func getFileContentType(file io.Reader) (string, error) {
 
 	// Always returns a valid content-type by returning
 	// "application/octet-stream" if no others seemed to match.
-	contentType := http.DetectContentType(buffer)
+	contentType = http.DetectContentType(buffer)
 
 	return contentType, nil
 }
