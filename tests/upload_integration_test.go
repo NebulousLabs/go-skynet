@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	srcDir     = "../testdata"
-	srcFile    = "../testdata/file1.txt"
-	skylink    = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
-	skykeyName = "testcreateskykey"
-	skykeyID   = "pJAPPfWkWXpss3BvMDCJCw=="
+	numFilesInDir = 5
+	srcDir        = "../testdata"
+	srcFile       = "../testdata/file1.txt"
+	skylink       = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
+	skykeyName    = "testcreateskykey"
+	skykeyID      = "pJAPPfWkWXpss3BvMDCJCw=="
 )
 
 var (
@@ -216,8 +217,8 @@ func TestUploadDirectory(t *testing.T) {
 		t.Fatal("did not expect request body to contain file0.txt")
 	}
 	count := strings.Count(interceptedRequest, "Content-Disposition")
-	if count != 4 {
-		t.Fatalf("expected %v files sent, got %v", 4, count)
+	if count != numFilesInDir {
+		t.Fatalf("expected %v files sent, got %v", numFilesInDir, count)
 	}
 
 	if sialink2 != sialink {
@@ -256,8 +257,11 @@ func TestUploadDirectoryContentTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	print(interceptedRequest)
-	expectedHeader := "Content-Disposition: form-data; name=\"files[]\"; filename=\"index.html\"\r\nContent-Type: text/html; charset=utf-8"
+	expectedHeader := "Content-Disposition: form-data; name=\"files[]\"; filename=\"index.html\"\r\nContent-Type: text/html; charset=utf-8\r\n\r\ntest"
+	if !strings.Contains(interceptedRequest, expectedHeader) {
+		t.Fatal("did not find expected header")
+	}
+	expectedHeader = "Content-Disposition: form-data; name=\"files[]\"; filename=\"indexhtml\"\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<html>test</html>"
 	if !strings.Contains(interceptedRequest, expectedHeader) {
 		t.Fatal("did not find expected header")
 	}
@@ -291,8 +295,8 @@ func TestUploadDirectoryCustomName(t *testing.T) {
 	}
 
 	count := strings.Count(interceptedRequest, "Content-Disposition")
-	if count != 4 {
-		t.Fatalf("expected %v files sent, got %v", 4, count)
+	if count != numFilesInDir {
+		t.Fatalf("expected %v files sent, got %v", numFilesInDir, count)
 	}
 
 	// Verify we don't have pending mocks.
@@ -327,8 +331,8 @@ func TestUploadDirectorySkykey(t *testing.T) {
 	}
 
 	count := strings.Count(interceptedRequest, "Content-Disposition")
-	if count != 4 {
-		t.Fatalf("expected %v files sent, got %v", 4, count)
+	if count != numFilesInDir {
+		t.Fatalf("expected %v files sent, got %v", numFilesInDir, count)
 	}
 
 	if sialink2 != sialink {
@@ -354,8 +358,8 @@ func TestUploadDirectorySkykey(t *testing.T) {
 	}
 
 	count = strings.Count(interceptedRequest, "Content-Disposition")
-	if count != 4 {
-		t.Fatalf("expected %v files sent, got %v", 4, count)
+	if count != numFilesInDir {
+		t.Fatalf("expected %v files sent, got %v", numFilesInDir, count)
 	}
 
 	if sialink2 != sialink {

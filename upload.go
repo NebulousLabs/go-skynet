@@ -93,14 +93,20 @@ func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err erro
 	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
 	for filename, data := range uploadData {
+		// We may need to do a read to determine the Content-Type. Tee the read
+		// into a buffer so we can read again.
 		var buf bytes.Buffer
 		tee := io.TeeReader(data, &buf)
+		// Create the form file, inferring the Content-Type.
 		part, err := createFormFileContentType(writer, fieldname, filename, tee)
 		if err != nil {
 			return "", errors.AddContext(err, fmt.Sprintf("could not create form file for file %v", filename))
 		}
-		_, err = io.Copy(part, data)
-		if err != nil {
+		// Copy from the buffer and then the rest of the data that hasn't been
+		// read.
+		_, err = io.Copy(part, &buf)
+		_, err2 := io.Copy(part, data)
+		if errors.Compose(err, err2) != nil {
 			return "", errors.AddContext(err, fmt.Sprintf("could not copy data for file %v", filename))
 		}
 	}
