@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
+	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	gopath "path"
@@ -90,12 +93,20 @@ func Upload(uploadData UploadData, opts UploadOptions) (skylink string, err erro
 	url := makeURL(opts.PortalURL, opts.EndpointPath, values)
 
 	for filename, data := range uploadData {
-		part, err := writer.CreateFormFile(fieldname, filename)
+		// We may need to do a read to determine the Content-Type. Tee the read
+		// into a buffer so we can read again.
+		var buf bytes.Buffer
+		tee := io.TeeReader(data, &buf)
+		// Create the form file, inferring the Content-Type.
+		part, err := createFormFileContentType(writer, fieldname, filename, tee)
 		if err != nil {
 			return "", errors.AddContext(err, fmt.Sprintf("could not create form file for file %v", filename))
 		}
-		_, err = io.Copy(part, data)
-		if err != nil {
+		// Copy from the buffer and then the rest of the data that hasn't been
+		// read.
+		_, err = io.Copy(part, &buf)
+		_, err2 := io.Copy(part, data)
+		if errors.Compose(err, err2) != nil {
 			return "", errors.AddContext(err, fmt.Sprintf("could not copy data for file %v", filename))
 		}
 	}
@@ -192,4 +203,46 @@ func UploadDirectory(path string, opts UploadOptions) (skylink string, err error
 	}
 
 	return Upload(uploadData, opts)
+}
+
+// createFormFileContentType is based on multipart.Writer.CreateFormFile, except
+// it properly sets the content types.
+func createFormFileContentType(w *multipart.Writer, fieldname, filename string, file io.Reader) (io.Writer, error) {
+	escapeQuotes := func(s string) string {
+		var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+		return quoteEscaper.Replace(s)
+	}
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition",
+		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+			escapeQuotes(fieldname), escapeQuotes(filename)))
+	contentType, err := getFileContentType(filename, file)
+	if err != nil {
+		return nil, err
+	}
+	h.Set("Content-Type", contentType)
+	return w.CreatePart(h)
+}
+
+// getFileContentType extracts the content type from a given file.
+func getFileContentType(filename string, file io.Reader) (string, error) {
+	contentType := mime.TypeByExtension(filepath.Ext(filename))
+	if contentType != "" {
+		return contentType, nil
+	}
+
+	// Only the first 512 bytes are used to sniff the content type.
+	buffer := make([]byte, 512)
+
+	_, err := file.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+
+	// Always returns a valid content-type by returning
+	// "application/octet-stream" if no others seemed to match.
+	contentType = http.DetectContentType(buffer)
+
+	return contentType, nil
 }
