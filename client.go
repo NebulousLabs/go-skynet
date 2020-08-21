@@ -36,7 +36,7 @@ func New() SkynetClient {
 // Pass in "" for the portal to let the function select one for you.
 func NewCustom(portalURL string, customOptions Options) SkynetClient {
 	if portalURL == "" {
-		portalURL = DefaultPortalURL
+		portalURL = DefaultPortalURL()
 	}
 	return SkynetClient{
 		PortalURL: portalURL,

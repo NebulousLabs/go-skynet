@@ -30,7 +30,7 @@ func TestDownloadFile(t *testing.T) {
 	// Match against the full URL, including the skylink.
 	opts := skynet.DefaultDownloadOptions
 	urlpath := strings.TrimRight(opts.EndpointPath, "/") + "/" + skylink
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Get(urlpath).
 		Reply(200).
 		BodyString("test\n")
@@ -80,7 +80,7 @@ func TestDownloadFileSkykey(t *testing.T) {
 	opts := skynet.DefaultDownloadOptions
 	opts.SkykeyName = skykeyName
 	urlpath := strings.TrimRight(opts.EndpointPath, "/") + "/" + skylink
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Get(urlpath).
 		MatchParam("skykeyname", skykeyName).
 		Reply(200).
@@ -110,7 +110,7 @@ func TestDownloadFileSkykey(t *testing.T) {
 	opts = skynet.DefaultDownloadOptions
 	opts.SkykeyID = skykeyID
 	urlpath = strings.TrimRight(opts.EndpointPath, "/") + "/" + skylink
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Get(urlpath).
 		MatchParam("skykeyid", skykeyID).
 		Reply(200).

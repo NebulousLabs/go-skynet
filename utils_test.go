@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-const (
-	portalURL = DefaultPortalURL
+var (
+	portalURL = DefaultPortalURL()
 )
 
 // TestMakeURL tests making URLs.
