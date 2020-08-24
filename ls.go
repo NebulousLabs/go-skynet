@@ -1,24 +1,24 @@
 package skynet
 
 type (
-	// LsOptions contains the options used for ls.
-	LsOptions struct {
+	// ListFilesOptions contains the options used for list files.
+	ListFilesOptions struct {
 		Options
-		EndpointPathLsDir  string
-		EndpointPathLsFile string
+		EndpointPathListFilesDir  string
+		EndpointPathListFilesFile string
 	}
 )
 
 var (
-	// DefaultLsOptions conains the default ls options.
-	DefaultLsOptions = LsOptions{
-		Options:            DefaultOptions(""),
-		EndpointPathLsDir:  "/renter/dir",
-		EndpointPathLsFile: "/renter/file",
+	// DefaultListFilesOptions conains the default list files options.
+	DefaultListFilesOptions = ListFilesOptions{
+		Options:                   DefaultOptions(""),
+		EndpointPathListFilesDir:  "/renter/dir",
+		EndpointPathListFilesFile: "/renter/file",
 	}
 )
 
-// Ls returns the list of files and/or directories at the given path.
-func (sc *SkynetClient) Ls(siaPath string, opts LsOptions) error {
+// ListFiles returns the list of files and/or directories at the given path.
+func (sc *SkynetClient) ListFiles(siaPath string, opts ListFilesOptions) error {
 	panic("Not implemented")
 }
