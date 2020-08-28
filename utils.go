@@ -38,7 +38,8 @@ type (
 )
 
 const (
-	// DefaultSkynetPortalURL is the default URL of the Skynet portal to use.
+	// DefaultSkynetPortalURL is the default URL of the Skynet portal to use in
+	// the absence of configuration.
 	DefaultSkynetPortalURL = "https://siasky.net"
 
 	// URISkynetPrefix is the URI prefix for Skynet.
@@ -60,7 +61,8 @@ func DefaultOptions(endpointPath string) Options {
 	}
 }
 
-// DefaultPortalURL intelligently selects a default portal.
+// DefaultPortalURL selects the default portal URL to use when initializing a
+// client. May involve network queries to several candidate portals.
 //
 // TODO: This will be smarter. See
 // https://github.com/NebulousLabs/skynet-docs/issues/21.
