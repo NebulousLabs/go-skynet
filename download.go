@@ -22,8 +22,8 @@ type (
 		SkykeyID string
 	}
 
-	// GetMetadataOptions contains the options used for getting metadata.
-	GetMetadataOptions struct {
+	// MetadataOptions contains the options used for getting metadata.
+	MetadataOptions struct {
 		Options
 	}
 )
@@ -37,8 +37,8 @@ var (
 		SkykeyID:   "",
 	}
 
-	// DefaultGetMetadataOptions contains the default getting metadata options.
-	DefaultGetMetadataOptions = GetMetadataOptions{
+	// DefaultMetadataOptions contains the default getting metadata options.
+	DefaultMetadataOptions = MetadataOptions{
 		Options: DefaultOptions("/"),
 	}
 )
@@ -91,7 +91,7 @@ func (sc *SkynetClient) DownloadFile(path, skylink string, opts DownloadOptions)
 	return errors.AddContext(err, "could not copy data to file at "+path)
 }
 
-// GetMetadata downloads metadata from the given skylink.
-func (sc *SkynetClient) GetMetadata(skylink string, opts GetMetadataOptions) error {
+// Metadata downloads metadata from the given skylink.
+func (sc *SkynetClient) Metadata(skylink string, opts MetadataOptions) error {
 	panic("Not implemented")
 }
