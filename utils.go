@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,8 +23,6 @@ type (
 	// Options contains options used for connecting to a Skynet portal and
 	// endpoint.
 	Options struct {
-		// PortalURL is the URL of the portal to use.
-		PortalURL string
 		// EndpointPath is the relative URL path of the portal endpoint to
 		// contact.
 		EndpointPath string
@@ -41,8 +38,9 @@ type (
 )
 
 const (
-	// DefaultPortalURL is the default URL of the portal to use.
-	DefaultPortalURL = "https://siasky.net"
+	// DefaultSkynetPortalURL is the default URL of the Skynet portal to use in
+	// the absence of configuration.
+	DefaultSkynetPortalURL = "https://siasky.net"
 
 	// URISkynetPrefix is the URI prefix for Skynet.
 	URISkynetPrefix = "sia://"
@@ -56,38 +54,20 @@ var (
 // DefaultOptions returns the default options with the given endpoint path.
 func DefaultOptions(endpointPath string) Options {
 	return Options{
-		PortalURL:    DefaultPortalURL,
 		EndpointPath: endpointPath,
+
+		APIKey:          "",
+		CustomUserAgent: "",
 	}
 }
 
-// executeRequest makes and executes a request given the Options.
-func executeRequest(method, url string, reqBody io.Reader, opts Options) (*http.Response, error) {
-	req, err := http.NewRequest(method, url, reqBody)
-	if err != nil {
-		return nil, errors.AddContext(err, fmt.Sprintf("could not create %v request", method))
-	}
-	if opts.APIKey != "" {
-		req.SetBasicAuth("", opts.APIKey)
-	}
-	if opts.CustomUserAgent != "" {
-		req.Header.Set("User-Agent", opts.CustomUserAgent)
-	}
-	if opts.customContentType != "" {
-		req.Header.Set("Content-Type", opts.customContentType)
-	}
-
-	// Execute the request.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, errors.AddContext(err, "could not execute request")
-	}
-	if resp.StatusCode >= 400 {
-		return nil, errors.AddContext(makeResponseError(resp), "error code received")
-	}
-
-	return resp, nil
+// DefaultPortalURL selects the default portal URL to use when initializing a
+// client. May involve network queries to several candidate portals.
+//
+// TODO: This will be smarter. See
+// https://github.com/NebulousLabs/skynet-docs/issues/21.
+func DefaultPortalURL() string {
+	return DefaultSkynetPortalURL
 }
 
 // makeResponseError makes an error given an error response.
@@ -114,8 +94,11 @@ func makeResponseError(resp *http.Response) error {
 }
 
 // makeURL makes a URL from the given parts.
-func makeURL(portalURL, path string, query url.Values) string {
+func makeURL(portalURL, path, extraPath string, query url.Values) string {
 	url := fmt.Sprintf("%s/%s", strings.TrimRight(portalURL, "/"), strings.TrimLeft(path, "/"))
+	if extraPath != "" {
+		url = fmt.Sprintf("%s/%s", strings.TrimRight(url, "/"), strings.TrimLeft(extraPath, "/"))
+	}
 	if query == nil {
 		return url
 	}

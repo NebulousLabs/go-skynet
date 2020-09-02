@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-const (
-	portalURL = DefaultPortalURL
+var (
+	portalURL = DefaultPortalURL()
 )
 
 // TestMakeURL tests making URLs.
@@ -16,44 +16,49 @@ func TestMakeURL(t *testing.T) {
 	values2.Set("foo", "bar")
 	values2.Set("bar", "foo")
 	tests := []struct {
-		url, path string
-		values    url.Values
-		out       string
+		url, path, extraPath string
+		values               url.Values
+		out                  string
 	}{
 		{
-			portalURL, "test",
+			portalURL, "test", "",
 			nil,
 			portalURL + "/test",
 		},
 		{
-			portalURL, "test",
+			portalURL, "test", "skylink",
 			values1,
-			portalURL + "/test",
+			portalURL + "/test/skylink",
 		},
 		{
-			portalURL, "/",
+			portalURL, "/", "",
 			nil,
 			portalURL + "/",
 		},
 		{
-			portalURL + "/test", "skylink",
+			portalURL, "/", "skylink",
+			nil,
+			portalURL + "/skylink",
+		},
+		{
+			portalURL + "/test", "skylink", "",
 			nil,
 			portalURL + "/test/skylink",
 		},
 		{
-			portalURL, "skynet/skyfile",
+			portalURL, "skynet/skyfile", "",
 			values2,
 			portalURL + "/skynet/skyfile?bar=foo&foo=bar",
 		},
 		{
-			portalURL, "//test/",
+			portalURL, "//test/", "",
 			values2,
 			portalURL + "/test/?bar=foo&foo=bar",
 		},
 	}
 
 	for _, test := range tests {
-		url := makeURL(test.url, test.path, test.values)
+		url := makeURL(test.url, test.path, test.extraPath, test.values)
 		if url != test.out {
 			t.Fatalf("expected %v, got %v", test.out, url)
 		}

@@ -15,12 +15,12 @@ func TestAddSkykey(t *testing.T) {
 	const skykey = "skykey:BAAAAAAAAABrZXkxAAAAAAAAAAQgAAAAAAAAADiObVg49-0juJ8udAx4qMW-TEHgDxfjA0fjJSNBuJ4a"
 
 	opts := skynet.DefaultAddSkykeyOptions
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("skykey", skykey).
 		Reply(200)
 
-	err := skynet.AddSkykey(skykey, opts)
+	err := client.AddSkykey(skykey, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,14 +41,14 @@ func TestCreateSkykey(t *testing.T) {
 	const skykeyType = "private-id"
 
 	opts := skynet.DefaultCreateSkykeyOptions
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("name", name).
 		MatchParam("type", skykeyType).
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
-	fullSkykey, err := skynet.CreateSkykey(name, skykeyType, opts)
+	fullSkykey, err := client.CreateSkykey(name, skykeyType, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,12 +81,12 @@ func TestGetSkykey(t *testing.T) {
 	// Get by name.
 
 	opts := skynet.DefaultGetSkykeyOptions
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Get(opts.EndpointPath).
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
-	fullSkykey, err := skynet.GetSkykeyByName(name, opts)
+	fullSkykey, err := client.GetSkykeyByName(name, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,12 +103,12 @@ func TestGetSkykey(t *testing.T) {
 
 	// Get by ID
 
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Get(opts.EndpointPath).
 		Reply(200).
 		JSON(skynet.Skykey{Skykey: skykey, Name: name, ID: id, Type: skykeyType})
 
-	fullSkykey, err = skynet.GetSkykeyByID(id, opts)
+	fullSkykey, err = client.GetSkykeyByID(id, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,12 +146,12 @@ func TestGetSkykeys(t *testing.T) {
 	response := []skynet.Skykey{skykey1, skykey2}
 
 	opts := skynet.DefaultGetSkykeysOptions
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Get(opts.EndpointPath).
 		Reply(200).
 		JSON(map[string][]skynet.Skykey{"skykeys": response})
 
-	skykeys, err := skynet.GetSkykeys(opts)
+	skykeys, err := client.GetSkykeys(opts)
 	if err != nil {
 		t.Fatal(err)
 	}

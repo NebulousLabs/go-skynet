@@ -31,7 +31,7 @@ func TestUploadFile(t *testing.T) {
 
 	// Test that uploading a nonexistent file fails.
 
-	_, err := skynet.UploadFile("this-should-not-exist.txt", skynet.DefaultUploadOptions)
+	_, err := client.UploadFile("this-should-not-exist.txt", skynet.DefaultUploadOptions)
 	if !strings.Contains(err.Error(), "no such file or directory") {
 		t.Fatalf("expected ErrNotExist error, got %v", err)
 	}
@@ -40,12 +40,12 @@ func TestUploadFile(t *testing.T) {
 
 	// Upload file request.
 	opts := skynet.DefaultUploadOptions
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	sialink2, err := skynet.UploadFile(srcFile, opts)
+	sialink2, err := client.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,18 +68,72 @@ func TestUploadFile(t *testing.T) {
 func TestUploadFileWithAPIKey(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
-	// Test uploading a file.
+	// Test uploading a file with an API key set.
 
 	// Upload file request.
 	opts := skynet.DefaultUploadOptions
 	opts.APIKey = "foobar"
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchHeader("Authorization", "Basic OmZvb2Jhcg==").
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	sialink2, err := skynet.UploadFile(srcFile, opts)
+	sialink2, err := client.UploadFile(srcFile, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Verify we don't have pending mocks.
+	if !gock.IsDone() {
+		t.Fatal("test finished with pending mocks")
+	}
+}
+
+// TestUploadCustomUserAgent tests uploading a single file with a custom user
+// agent.
+func TestUploadCustomUserAgent(t *testing.T) {
+	defer gock.Off()
+
+	const srcFile = "../testdata/file1.txt"
+	const skylink = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
+	const sialink = skynet.URISkynetPrefix + skylink
+
+	// Test uploading a file with a custom user agent taken from a client.
+
+	client2 := skynet.NewCustom("", skynet.Options{CustomUserAgent: "Sia-Agent"})
+
+	// Upload file request.
+	opts := skynet.DefaultUploadOptions
+	gock.New(skynet.DefaultPortalURL()).
+		Post(opts.EndpointPath).
+		MatchHeader("User-Agent", "Sia-Agent").
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	sialink2, err := client2.UploadFile(srcFile, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sialink2 != sialink {
+		t.Fatalf("expected sialink %v, got %v", sialink, sialink2)
+	}
+
+	// Test uploading a file with a customer user agent taken from the API call.
+
+	// Upload file request.
+	opts = skynet.DefaultUploadOptions
+	opts.CustomUserAgent = "Sia-Agent-2"
+	gock.New(skynet.DefaultPortalURL()).
+		Post(opts.EndpointPath).
+		MatchHeader("User-Agent", "Sia-Agent-2").
+		Reply(200).
+		JSON(map[string]string{"skylink": skylink})
+
+	sialink2, err = client2.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,12 +159,12 @@ func TestUploadFileCustomName(t *testing.T) {
 
 	opts := skynet.DefaultUploadOptions
 	opts.CustomFilename = "foobar"
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	sialink2, err := skynet.UploadFile(srcFile, opts)
+	sialink2, err := client.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,13 +195,13 @@ func TestUploadFileSkykey(t *testing.T) {
 
 	opts := skynet.DefaultUploadOptions
 	opts.SkykeyName = skykeyName
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("skykeyname", skykeyName).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	sialink2, err := skynet.UploadFile(srcFile, opts)
+	sialink2, err := client.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,13 +213,13 @@ func TestUploadFileSkykey(t *testing.T) {
 
 	opts = skynet.DefaultUploadOptions
 	opts.SkykeyID = skykeyID
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("skykeyid", skykeyID).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
-	sialink2, err = skynet.UploadFile(srcFile, opts)
+	sialink2, err = client.UploadFile(srcFile, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +243,7 @@ func TestUploadDirectory(t *testing.T) {
 	// Upload a directory.
 
 	opts := skynet.DefaultUploadOptions
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("filename", filename).
 		Reply(200).
@@ -197,7 +251,7 @@ func TestUploadDirectory(t *testing.T) {
 
 	interceptedRequest = ""
 
-	sialink2, err := skynet.UploadDirectory(srcDir, opts)
+	sialink2, err := client.UploadDirectory(srcDir, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,14 +299,14 @@ func TestUploadDirectoryContentTypes(t *testing.T) {
 	// Upload a directory.
 
 	opts := skynet.DefaultUploadOptions
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		Reply(200).
 		JSON(map[string]string{"skylink": skylink})
 
 	interceptedRequest = ""
 
-	_, err := skynet.UploadDirectory(srcDir, opts)
+	_, err := client.UploadDirectory(srcDir, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +335,7 @@ func TestUploadDirectoryCustomName(t *testing.T) {
 
 	opts := skynet.DefaultUploadOptions
 	opts.CustomDirname = "barfoo"
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("filename", "barfoo").
 		Reply(200).
@@ -289,7 +343,7 @@ func TestUploadDirectoryCustomName(t *testing.T) {
 
 	interceptedRequest = ""
 
-	_, err := skynet.UploadDirectory(srcDir, opts)
+	_, err := client.UploadDirectory(srcDir, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +370,7 @@ func TestUploadDirectorySkykey(t *testing.T) {
 
 	opts := skynet.DefaultUploadOptions
 	opts.SkykeyName = skykeyName
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("filename", filename).
 		MatchParam("skykeyname", skykeyName).
@@ -325,7 +379,7 @@ func TestUploadDirectorySkykey(t *testing.T) {
 
 	interceptedRequest = ""
 
-	sialink2, err := skynet.UploadDirectory(srcDir, opts)
+	sialink2, err := client.UploadDirectory(srcDir, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -343,7 +397,7 @@ func TestUploadDirectorySkykey(t *testing.T) {
 
 	opts = skynet.DefaultUploadOptions
 	opts.SkykeyID = skykeyID
-	gock.New(skynet.DefaultPortalURL).
+	gock.New(skynet.DefaultPortalURL()).
 		Post(opts.EndpointPath).
 		MatchParam("filename", filename).
 		MatchParam("skykeyid", skykeyID).
@@ -352,7 +406,7 @@ func TestUploadDirectorySkykey(t *testing.T) {
 
 	interceptedRequest = ""
 
-	sialink2, err = skynet.UploadDirectory(srcDir, opts)
+	sialink2, err = client.UploadDirectory(srcDir, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
