@@ -1,4 +1,4 @@
-module github.com/NebulousLabs/go-skynet
+module github.com/NebulousLabs/go-skynet/v2
 
 go 1.13
 

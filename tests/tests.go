@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	skynet "github.com/NebulousLabs/go-skynet"
+	skynet "github.com/NebulousLabs/go-skynet/v2"
 	"gopkg.in/h2non/gock.v1"
 )
 
