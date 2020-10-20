@@ -76,7 +76,9 @@ func (sc *SkynetClient) Upload(uploadData UploadData, opts UploadOptions) (skyli
 
 	var fieldname string
 	var filename string
-	if len(uploadData) == 1 {
+	// Upload as a directory if the dirname is set, even if there is only 1
+	// file.
+	if len(uploadData) == 1 && opts.CustomDirname == "" {
 		fieldname = opts.PortalFileFieldName
 	} else {
 		if opts.CustomDirname == "" {
@@ -87,9 +89,17 @@ func (sc *SkynetClient) Upload(uploadData UploadData, opts UploadOptions) (skyli
 	}
 
 	values := url.Values{}
-	values.Set("filename", filename)
-	values.Set("skykeyname", opts.SkykeyName)
-	values.Set("skykeyid", opts.SkykeyID)
+	// Empty values are ignored, but check for "" anyway for clarity.
+	if filename != "" {
+		// Empty
+		values.Set("filename", filename)
+	}
+	if opts.SkykeyName != "" {
+		values.Set("skykeyname", opts.SkykeyName)
+	}
+	if opts.SkykeyID != "" {
+		values.Set("skykeyid", opts.SkykeyID)
+	}
 
 	for filename, data := range uploadData {
 		// We may need to do a read to determine the Content-Type. Tee the read
@@ -193,6 +203,10 @@ func (sc *SkynetClient) UploadDirectory(path string, opts UploadOptions) (skylin
 
 	// prepare formdata
 	uploadData := make(UploadData)
+	basepath := path
+	if basepath != "/" {
+		basepath += "/"
+	}
 	for _, filepath := range files {
 		file, err := os.Open(gopath.Clean(filepath)) // Clean again to prevent lint error.
 		if err != nil {
@@ -200,10 +214,6 @@ func (sc *SkynetClient) UploadDirectory(path string, opts UploadOptions) (skylin
 		}
 		// Remove the base path before uploading. Any ending '/' was removed
 		// from `path` with `Clean`.
-		basepath := path
-		if basepath != "/" {
-			basepath += "/"
-		}
 		filepath = strings.TrimPrefix(filepath, basepath)
 		uploadData[filepath] = file
 	}
