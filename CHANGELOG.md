@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1]
+
+### Changed
+
+- Fixed single-file directory uploads being uploaded as files instead of
+  directories.
+
 ## [2.0.0]
 
 ### Changed
