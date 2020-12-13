@@ -16,10 +16,10 @@ func encodeString(toEncode string) []byte {
 	return append(encodedNumber, []byte(toEncode)...)
 }
 
-func hashDataKey(dataKey string) ([]byte, error) {
+func hashDataKey(dataKey string) []byte {
 	encodedDataKey := encodeString(dataKey)
 	hash := blake2b.Sum256(encodedDataKey)
-	return hash[:], nil
+	return hash[:]
 }
 
 func hashAll(args ...[]byte) []byte {
@@ -31,15 +31,10 @@ func hashAll(args ...[]byte) []byte {
 	return hash[:]
 }
 
-func hashRegistryEntry(s SignedEntry) ([]byte, error) {
-	dataKeyHash, err := hashDataKey(s.Entry.DataKey)
-	if err != nil {
-		return nil, err
-	}
-
+func hashRegistryEntry(s SignedEntry) []byte {
 	return hashAll(
-		dataKeyHash,
+		hashDataKey(s.Entry.DataKey),
 		encodeString(s.Entry.Data),
 		encodeNumber(s.Entry.Revision),
-	), nil
+	)
 }

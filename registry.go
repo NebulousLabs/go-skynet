@@ -48,11 +48,11 @@ func (sc *SkynetClient) GetEntry(
 	_ GetEntryOptions,
 ) (r RegistryEntry, err error) {
 	// TODO: use timeout
-	hash, err := hashDataKey(dataKey)
+	dataKeyHash := hashDataKey(dataKey)
 
 	values := url.Values{}
 	values.Set("publickey", fmt.Sprintf("ed25519:%s", publicKey))
-	values.Set("datakey", hex.EncodeToString(hash))
+	values.Set("datakey", hex.EncodeToString(dataKeyHash))
 
 	resp, err := sc.executeRequest(
 		requestOptions{
@@ -123,10 +123,9 @@ func verifySignature(
 		Signature: decodedSignature,
 	}
 
-	message, err := hashRegistryEntry(signedEntry)
-	if err != nil {
-		return false, errors.AddContext(err, "could not hash registry entry")
-	}
-
-	return ed25519.Verify(publicKeyBytes, message, decodedSignature), nil
+	return ed25519.Verify(
+		publicKeyBytes,
+		hashRegistryEntry(signedEntry),
+		decodedSignature,
+	), nil
 }
