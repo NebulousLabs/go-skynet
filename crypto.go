@@ -3,6 +3,7 @@ package skynet
 import (
 	"encoding/binary"
 	"golang.org/x/crypto/blake2b"
+	"golang.org/x/crypto/ed25519"
 )
 
 func encodeNumber(number int64) []byte {
@@ -31,10 +32,16 @@ func hashAll(args ...[]byte) []byte {
 	return hash[:]
 }
 
-func hashRegistryEntry(s SignedEntry) []byte {
+func hashRegistryEntry(s RegistryEntry) []byte {
 	return hashAll(
-		hashDataKey(s.Entry.DataKey),
-		encodeString(s.Entry.Data),
-		encodeNumber(s.Entry.Revision),
+		hashDataKey(s.DataKey),
+		encodeString(s.Data),
+		encodeNumber(s.Revision),
 	)
+}
+
+func publicKeyFromPrivateKey(key ed25519.PrivateKey) ed25519.PublicKey {
+	publicKey := make([]byte, 32)
+	copy(publicKey, key[32:])
+	return publicKey
 }
