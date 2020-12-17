@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"gitlab.com/NebulousLabs/encoding"
 	"gitlab.com/NebulousLabs/errors"
 	"golang.org/x/crypto/ed25519"
 	"net/http"
@@ -43,7 +44,7 @@ type (
 		// Entry is the content of the registry entry.
 		Entry RegistryEntry
 		// Signature is the signature of the registry entry.
-		Signature []byte
+		Signature Signature
 	}
 
 	// SetEntryPublicKey contains information about registry entry publicKey.
@@ -51,7 +52,7 @@ type (
 		// Algorithm is the used algorithm
 		Algorithm string `json:"algorithm"`
 		// Key is the publicKey.
-		Key []int `json:"key"`
+		Key []byte `json:"key"`
 	}
 
 	// SetEntryRequestBody is the body content used to set registry entry.
@@ -63,10 +64,14 @@ type (
 		// Revision is the revision number for the entry.
 		Revision int `json:"revision"`
 		// Data contains the stored data in the entry.
-		Data []int `json:"data"`
+		Data []byte `json:"data"`
 		// Signature is the signature of the registry entry.
-		Signature []int `json:"signature"`
+		Signature Signature `json:"signature"`
 	}
+
+	// Signature proves that data was signed by the owner of a particular
+	// public key's corresponding secret key.
+	Signature [ed25519.SignatureSize]byte
 )
 
 // GetEntry gets the registry entry corresponding to the publicKey and dataKey.
@@ -129,6 +134,12 @@ func verifySignature(
 		return false, errors.New("could not decode signature")
 	}
 
+	var signature Signature
+	err = encoding.NewDecoder(bytes.NewReader(decodedSignature), encoding.DefaultAllocLimit).Decode(&signature)
+	if err != nil {
+		return false, errors.AddContext(err, "could not decode signature")
+	}
+
 	decodedData, err := hex.DecodeString(registryEntry.Data)
 	if err != nil {
 		return false, errors.New("could not decode data")
@@ -145,7 +156,7 @@ func verifySignature(
 			Data:     string(decodedData),
 			Revision: registryEntry.Revision,
 		},
-		Signature: decodedSignature,
+		Signature: signature,
 	}
 
 	return ed25519.Verify(
@@ -201,23 +212,14 @@ func prepareSetEntryRequestBody(
 		return nil, errors.New("could not decode privateKey")
 	}
 
-	signature := ed25519.Sign(privateKeyBytes, hashRegistryEntry(entry))
+	signatureBytes := ed25519.Sign(privateKeyBytes, hashRegistryEntry(entry))
 	publicKeyBuffer, err := publicKeyFromPrivateKey(privateKeyBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	publicKeyBufferArray, err := intSliceFromBytes(publicKeyBuffer)
-	if err != nil {
-		return nil, err
-	}
-
-	entryDataArray, err := intSliceFromBytes([]byte(entry.Data))
-	if err != nil {
-		return nil, err
-	}
-
-	signatureArray, err := intSliceFromBytes(signature)
+	var signature Signature
+	err = encoding.NewDecoder(bytes.NewReader(signatureBytes), encoding.DefaultAllocLimit).Decode(&signature)
 	if err != nil {
 		return nil, err
 	}
@@ -225,12 +227,12 @@ func prepareSetEntryRequestBody(
 	requestBody := SetEntryRequestBody{
 		Publickey: SetEntryPublicKey{
 			Algorithm: ed25519Algorithm,
-			Key:       publicKeyBufferArray,
+			Key:       publicKeyBuffer,
 		},
 		Datakey:   hex.EncodeToString(hashDataKey(entry.DataKey)),
 		Revision:  int(entry.Revision),
-		Data:      entryDataArray,
-		Signature: signatureArray,
+		Data:      []byte(entry.Data),
+		Signature: signature,
 	}
 
 	return json.Marshal(requestBody)

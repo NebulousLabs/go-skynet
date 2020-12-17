@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"gitlab.com/NebulousLabs/errors"
@@ -147,17 +146,4 @@ func walkDirectory(path string) ([]string, error) {
 		return []string{}, err
 	}
 	return files, nil
-}
-
-// intSliceFromBytes converts a slice of bytes into a slice of int
-func intSliceFromBytes(toConvert []byte) ([]int, error) {
-	u := make([]int, len(toConvert))
-	for i, b := range toConvert {
-		converted, err := strconv.Atoi(fmt.Sprintf("%v", b))
-		if err != nil {
-			return nil, fmt.Errorf("could not convert to int %v", b)
-		}
-		u[i] = converted
-	}
-	return u, nil
 }
