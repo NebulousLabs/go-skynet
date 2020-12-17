@@ -94,10 +94,7 @@ func (sc *SkynetClient) GetEntry(
 	}
 
 	defer func() {
-		err2 := resp.Body.Close()
-		if err != nil {
-			err = errors.Compose(err, err2)
-		}
+		err = errors.Extend(err, resp.Body.Close())
 	}()
 
 	if resp.StatusCode != http.StatusOK {
@@ -183,10 +180,7 @@ func (sc *SkynetClient) SetEntry(
 	}
 
 	defer func() {
-		err2 := resp.Body.Close()
-		if err != nil {
-			err = errors.Compose(err, err2)
-		}
+		err = errors.Extend(err, resp.Body.Close())
 	}()
 
 	if resp.StatusCode != http.StatusNoContent {

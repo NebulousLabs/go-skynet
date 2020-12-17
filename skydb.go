@@ -21,8 +21,6 @@ func (sc *SkynetClient) GetJSON(
 		return nil, errors.AddContext(err, "could not get entry")
 	}
 
-	fmt.Println(entry)
-
 	skylink, err := hex.DecodeString(entry.Data)
 	if err != nil {
 		return nil, errors.New("could not decode data")
@@ -72,8 +70,7 @@ func (sc *SkynetClient) SetJSON(
 	}
 
 	defer func() {
-		err = os.Remove(tempFile.Name())
-		return
+		err = errors.Extend(err, os.Remove(tempFile.Name()))
 	}()
 
 	skylink, err := sc.UploadFile(tempFile.Name(), DefaultUploadOptions)
