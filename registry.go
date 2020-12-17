@@ -45,17 +45,17 @@ type (
 		Signature []byte
 	}
 
-	// SetEntryPublicKey contains information about registry entry public key.
+	// SetEntryPublicKey contains information about registry entry publicKey.
 	SetEntryPublicKey struct {
 		// Algorithm is the used algorithm
 		Algorithm string `json:"algorithm"`
-		// Key is the public key.
+		// Key is the publicKey.
 		Key []int `json:"key"`
 	}
 
 	// SetEntryRequestBody is the body content used to set registry entry.
 	SetEntryRequestBody struct {
-		// Publickey contains information about registry entry public key.
+		// Publickey contains information about registry entry publicKey.
 		Publickey SetEntryPublicKey `json:"publickey"`
 		// DataKey is the key of the data for the given entry.
 		Datakey string `json:"datakey"`
