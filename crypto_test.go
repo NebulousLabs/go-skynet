@@ -1,6 +1,7 @@
 package skynet
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -8,7 +9,7 @@ import (
 
 func Test_encodeNumber(t *testing.T) {
 	tests := []struct {
-		number int64
+		number uint64
 		want   []byte
 	}{
 		{
@@ -91,7 +92,7 @@ func Test_hashDataKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hash := hashDataKey(tt.toHash)
-			require.Equal(t, tt.want, hash)
+			require.Equal(t, tt.want, hex.EncodeToString(hash))
 		})
 	}
 }

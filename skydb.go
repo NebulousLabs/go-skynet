@@ -10,8 +10,11 @@ import (
 	"strings"
 )
 
+// maxRevision is the maximum allowed value for an entry revision.
+// Setting an entry revision to this value prevents it from being updated further.
 const maxRevision uint64 = 18446744073709551615
 
+// GetJson gets the JSON object corresponding to the publicKey and dataKey.
 func (sc *SkynetClient) GetJson(
 	publicKey string,
 	dataKey string,
@@ -29,6 +32,7 @@ func (sc *SkynetClient) GetJson(
 	return sc.Download(string(skylink), DefaultDownloadOptions)
 }
 
+// SetJson sets a JSON object at the registry entry corresponding to the publicKey and dataKey.
 func (sc *SkynetClient) SetJson(
 	privateKey string,
 	dataKey string,
@@ -83,6 +87,7 @@ func (sc *SkynetClient) SetJson(
 	})
 }
 
+// createTempFileFromJson creates a temp file from a passed io.Reader
 func createTempFileFromJson(filename string, json io.Reader) (f *os.File, err error) {
 	if f, err = ioutil.TempFile(os.TempDir(), fmt.Sprintf("temp-%s", filename)); err != nil {
 		return nil, errors.AddContext(err, "could not create temp file")
