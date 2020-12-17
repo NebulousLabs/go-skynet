@@ -32,7 +32,7 @@ func (sc *SkynetClient) GetJson(
 func (sc *SkynetClient) SetJson(
 	privateKey string,
 	dataKey string,
-	json []byte,
+	json io.Reader,
 	revision *uint64,
 ) (err error) {
 	if revision == nil {
@@ -55,10 +55,19 @@ func (sc *SkynetClient) SetJson(
 		}
 	}
 
-	tempFile, err := createTempFileFromJson(dataKey, json
+	tempFile, err := createTempFileFromJson(dataKey, json)
 	if err != nil {
 		return
 	}
+
+	if tempFile == nil {
+		return errors.New("could not create temp json file")
+	}
+
+	defer func() {
+		err = os.Remove(tempFile.Name())
+		return
+	}()
 
 	skylink, err := sc.UploadFile(tempFile.Name(), DefaultUploadOptions)
 	if err != nil {
@@ -74,20 +83,15 @@ func (sc *SkynetClient) SetJson(
 	})
 }
 
-func createTempFileFromJson(filename string, json []byte) (f *os.File, err error) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("temp-%s", filename))
-	if err != nil {
+func createTempFileFromJson(filename string, json io.Reader) (f *os.File, err error) {
+	if f, err = ioutil.TempFile(os.TempDir(), fmt.Sprintf("temp-%s", filename)); err != nil {
 		return nil, errors.AddContext(err, "could not create temp file")
 	}
 
-	if _, err = tmpFile.Write(json); err != nil {
+	reader := io.TeeReader(json, f)
+	if _, err = ioutil.ReadAll(reader); err != nil {
 		return nil, errors.AddContext(err, "could not write json to temp file")
 	}
-
-	defer func() {
-		err = os.Remove(tmpFile.Name())
-		return
-	}()
 
 	return
 }
