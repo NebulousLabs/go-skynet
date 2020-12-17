@@ -31,40 +31,23 @@ type (
 		Signature []byte
 	}
 
-	GetEntryOptions struct {
-		Timeout int64
-	}
-
-	SetEntryOptions struct {
-		Timeout int64
+	SetEntryPublicKey struct {
+		Algorithm string `json:"algorithm"`
+		Key       []int  `json:"key"`
 	}
 
 	SetEntryBody struct {
-		Publickey struct {
-			Algorithm string `json:"algorithm"`
-			Key       []int  `json:"key"`
-		} `json:"publickey"`
-		Datakey   string `json:"datakey"`
-		Revision  int    `json:"revision"`
-		Data      []int  `json:"data"`
-		Signature []int  `json:"signature"`
-	}
-)
-
-var (
-	DefaultGetEntryOptions = GetEntryOptions{
-		Timeout: 5000,
-	}
-
-	DefaultSetEntryOptions = SetEntryOptions{
-		Timeout: 5000,
+		Publickey SetEntryPublicKey `json:"publickey"`
+		Datakey   string            `json:"datakey"`
+		Revision  int               `json:"revision"`
+		Data      []int             `json:"data"`
+		Signature []int             `json:"signature"`
 	}
 )
 
 func (sc *SkynetClient) GetEntry(
 	publicKey string,
 	dataKey string,
-	_ GetEntryOptions,
 ) (r RegistryEntryResponse, err error) {
 	// TODO: use timeout
 	dataKeyHash := hashDataKey(dataKey)
@@ -152,7 +135,6 @@ func verifySignature(
 func (sc *SkynetClient) SetEntry(
 	privateKey string,
 	entry RegistryEntry,
-	_ SetEntryOptions,
 ) (err error) {
 	privateKeyBytes, err := hex.DecodeString(privateKey)
 	if err != nil {
@@ -164,10 +146,13 @@ func (sc *SkynetClient) SetEntry(
 		return errors.AddContext(err, "could not create request body")
 	}
 
+	options := sc.Options
+	options.customContentType = "application/json"
+
 	resp, err := sc.executeRequest(
 		requestOptions{
-			Options:   sc.Options,
-			method:    "GET",
+			Options:   options,
+			method:    "POST",
 			reqBody:   bytes.NewBuffer(requestBody),
 			extraPath: registryEndpoint,
 		},
@@ -182,6 +167,8 @@ func (sc *SkynetClient) SetEntry(
 			err = errors.Compose(err, err2)
 		}
 	}()
+
+	fmt.Println(resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("could not fetch registry entry")
@@ -213,10 +200,7 @@ func prepareSetEntryRequestBody(
 	}
 
 	requestBody := SetEntryBody{
-		Publickey: struct {
-			Algorithm string `json:"algorithm"`
-			Key       []int  `json:"key"`
-		}{
+		Publickey: SetEntryPublicKey{
 			Algorithm: "ed25519",
 			Key:       publicKeyBufferArray,
 		},

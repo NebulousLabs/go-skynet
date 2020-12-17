@@ -10,7 +10,7 @@ func (sc *SkynetClient) GetJson(
 	publicKey string,
 	dataKey string,
 ) (io.ReadCloser, error) {
-	entry, err := sc.GetEntry(publicKey, dataKey, DefaultGetEntryOptions)
+	entry, err := sc.GetEntry(publicKey, dataKey)
 	if err != nil {
 		return nil, errors.AddContext(err, "could not get entry")
 	}
