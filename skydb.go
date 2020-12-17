@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-// GetJson gets the JSON object corresponding to the publicKey and dataKey.
-func (sc *SkynetClient) GetJson(
+// GetJSON gets the JSON object corresponding to the publicKey and dataKey.
+func (sc *SkynetClient) GetJSON(
 	publicKey string,
 	dataKey string,
 ) (io.ReadCloser, error) {
@@ -31,8 +31,8 @@ func (sc *SkynetClient) GetJson(
 	return sc.Download(string(skylink), DefaultDownloadOptions)
 }
 
-// SetJson sets a JSON object at the registry entry corresponding to the publicKey and dataKey.
-func (sc *SkynetClient) SetJson(
+// SetJSON sets a JSON object at the registry entry corresponding to the publicKey and dataKey.
+func (sc *SkynetClient) SetJSON(
 	privateKey string,
 	dataKey string,
 	json io.Reader,
@@ -68,7 +68,7 @@ func (sc *SkynetClient) SetJson(
 	}
 
 	if tempFile == nil {
-		return errors.New("could not create temp json file")
+		return errors.New("could not create temp JSON file")
 	}
 
 	defer func() {
@@ -98,7 +98,7 @@ func createTempFileFromJson(filename string, json io.Reader) (f *os.File, err er
 
 	reader := io.TeeReader(json, f)
 	if _, err = ioutil.ReadAll(reader); err != nil {
-		return nil, errors.AddContext(err, "could not write json to temp file")
+		return nil, errors.AddContext(err, "could not write JSON to temp file")
 	}
 
 	return

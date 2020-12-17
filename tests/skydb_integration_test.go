@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-// TestGetJson tests get of json from registry.
+// TestGetJson tests get of JSON from registry.
 func TestGetJson(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
@@ -37,7 +37,7 @@ func TestGetJson(t *testing.T) {
 			"signature": "f3dc30c2255254a7ffd64e767e15f8b9dc908491907c79afb3a1b24ee3b9602f10ff01bce22e1e700f502190fff4ee209f5b32e4c2b9e1ef6b0bed0c2b558406"
 		}`)
 
-	jsonReader, err := client.GetJson(
+	jsonReader, err := client.GetJSON(
 		"4a964fa1cb329d066aedcf7fc03a249eeea3cf2461811090b287daaaec37ab36",
 		"TEST_KEY",
 	)
@@ -51,7 +51,7 @@ func TestGetJson(t *testing.T) {
 	}
 
 	if !bytes.Equal(registryFile, json) {
-		t.Fatalf("registryFile and fetched json did not equal")
+		t.Fatalf("registryFile and fetched JSON did not equal")
 	}
 
 	// Verify we don't have pending mocks.
@@ -88,7 +88,7 @@ func TestGetJson_invalid_signature(t *testing.T) {
 			"signature": "f3dc30c2255254a7ffd64e767e15f8b9dc908491907c79afb3a1b24e"
 		}`)
 
-	_, err = client.GetJson(
+	_, err = client.GetJSON(
 		"4a964fa1cb329d066aedcf7fc03a249eeea3cf2461811090b287daaaec37ab36",
 		"TEST_KEY",
 	)
@@ -125,7 +125,7 @@ func TestGetJson_invalid_skylink(t *testing.T) {
 			"signature": "f3dc30c2255254a7ffd64e767e15f8b9dc908491907c79afb3a1b24ee3b9602f10ff01bce22e1e700f502190fff4ee209f5b32e4c2b9e1ef6b0bed0c2b558406"
 		}`)
 
-	_, err = client.GetJson(
+	_, err = client.GetJSON(
 		"4a964fa1cb329d066aedcf7fc03a249eeea3cf2461811090b287daaaec37ab36",
 		"TEST_KEY",
 	)
