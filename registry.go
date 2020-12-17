@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	registryEndpoint = "/skynet/registry"
+	RegistryEndpoint = "/skynet/registry"
 	ed25519Algorithm = "ed25519"
 )
 
@@ -85,7 +85,7 @@ func (sc *SkynetClient) GetEntry(
 			Options:   sc.Options,
 			method:    "GET",
 			reqBody:   &bytes.Buffer{},
-			extraPath: registryEndpoint,
+			extraPath: RegistryEndpoint,
 			query:     values,
 		},
 	)
@@ -175,7 +175,7 @@ func (sc *SkynetClient) SetEntry(
 			Options:   options,
 			method:    "POST",
 			reqBody:   bytes.NewBuffer(requestBody),
-			extraPath: registryEndpoint,
+			extraPath: RegistryEndpoint,
 		},
 	)
 	if err != nil {

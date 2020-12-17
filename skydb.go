@@ -24,6 +24,8 @@ func (sc *SkynetClient) GetJson(
 		return nil, errors.AddContext(err, "could not get entry")
 	}
 
+	fmt.Println(entry)
+
 	skylink, err := hex.DecodeString(entry.Data)
 	if err != nil {
 		return nil, errors.New("could not decode data")
