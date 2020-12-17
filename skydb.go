@@ -6,7 +6,6 @@ import (
 	"gitlab.com/NebulousLabs/errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 )
@@ -35,7 +34,7 @@ func (sc *SkynetClient) SetJson(
 	dataKey string,
 	json []byte,
 	revision *uint64,
-) error {
+) (err error) {
 	if revision == nil {
 		privateKeyBytes, err := hex.DecodeString(privateKey)
 		if err != nil {
@@ -56,20 +55,14 @@ func (sc *SkynetClient) SetJson(
 		}
 	}
 
-	tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("temp-%s", dataKey))
+	tempFile, err := createTempFileFromJson(dataKey, json
 	if err != nil {
-		log.Fatal("could not create temporary file", err)
+		return
 	}
 
-	if _, err = tmpFile.Write(json); err != nil {
-		log.Fatal("failed to write to temporary file", err)
-	}
-
-	defer os.Remove(tmpFile.Name())
-
-	skylink, err := sc.UploadFile(tmpFile.Name(), DefaultUploadOptions)
+	skylink, err := sc.UploadFile(tempFile.Name(), DefaultUploadOptions)
 	if err != nil {
-		return errors.New("could not upload file")
+		return errors.AddContext(err, "could not upload file")
 	}
 
 	skylink = strings.TrimPrefix(skylink, URISkynetPrefix)
@@ -79,4 +72,22 @@ func (sc *SkynetClient) SetJson(
 		Data:     skylink,
 		Revision: *revision,
 	})
+}
+
+func createTempFileFromJson(filename string, json []byte) (f *os.File, err error) {
+	tmpFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("temp-%s", filename))
+	if err != nil {
+		return nil, errors.AddContext(err, "could not create temp file")
+	}
+
+	if _, err = tmpFile.Write(json); err != nil {
+		return nil, errors.AddContext(err, "could not write json to temp file")
+	}
+
+	defer func() {
+		err = os.Remove(tmpFile.Name())
+		return
+	}()
+
+	return
 }
