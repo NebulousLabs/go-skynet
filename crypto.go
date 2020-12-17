@@ -48,12 +48,12 @@ func hashRegistryEntry(s RegistryEntry) []byte {
 
 // publicKeyFromPrivateKey return publicKey from privateKey.
 func publicKeyFromPrivateKey(key ed25519.PrivateKey) (ed25519.PublicKey, error) {
-	if len(key) != 64 {
+	if len(key) != ed25519.PrivateKeySize {
 		return nil, errors.New("invalid privateKey")
 	}
 
-	publicKey := make([]byte, 32)
-	copy(publicKey, key[32:])
+	publicKey := make([]byte, ed25519.PublicKeySize)
+	copy(publicKey, key[ed25519.PublicKeySize:])
 
 	return publicKey, nil
 }
