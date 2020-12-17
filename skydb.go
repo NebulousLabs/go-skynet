@@ -6,13 +6,10 @@ import (
 	"gitlab.com/NebulousLabs/errors"
 	"io"
 	"io/ioutil"
+	"math"
 	"os"
 	"strings"
 )
-
-// maxRevision is the maximum allowed value for an entry revision.
-// Setting an entry revision to this value prevents it from being updated further.
-const maxRevision uint64 = 18446744073709551615
 
 // GetJson gets the JSON object corresponding to the publicKey and dataKey.
 func (sc *SkynetClient) GetJson(
@@ -60,7 +57,7 @@ func (sc *SkynetClient) SetJson(
 		newRevision := entry.Revision + 1
 		revision = &newRevision
 
-		if newRevision > maxRevision {
+		if newRevision > math.MaxUint64 {
 			return errors.New("current entry already has maximum allowed revision, could not update the entry")
 		}
 	}
