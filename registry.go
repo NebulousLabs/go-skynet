@@ -16,14 +16,14 @@ const registryEndpoint = "/skynet/registry"
 type (
 	RegistryEntryResponse struct {
 		Data      string `json:"data"`
-		Revision  int64  `json:"revision"`
+		Revision  uint64 `json:"revision"`
 		Signature string `json:"signature"`
 	}
 
 	RegistryEntry struct {
 		DataKey  string
 		Data     string
-		Revision int64
+		Revision uint64
 	}
 
 	SignedEntry struct {
@@ -136,12 +136,7 @@ func (sc *SkynetClient) SetEntry(
 	privateKey string,
 	entry RegistryEntry,
 ) (err error) {
-	privateKeyBytes, err := hex.DecodeString(privateKey)
-	if err != nil {
-		return errors.New("could not decode privateKey")
-	}
-
-	requestBody, err := prepareSetEntryRequestBody(privateKeyBytes, entry)
+	requestBody, err := prepareSetEntryRequestBody(privateKey, entry)
 	if err != nil {
 		return errors.AddContext(err, "could not create request body")
 	}
@@ -168,19 +163,22 @@ func (sc *SkynetClient) SetEntry(
 		}
 	}()
 
-	fmt.Println(resp.StatusCode)
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("could not fetch registry entry")
+	if resp.StatusCode != http.StatusNoContent {
+		return errors.New("could not set registry entry")
 	}
 
 	return nil
 }
 
 func prepareSetEntryRequestBody(
-	privateKeyBytes []byte,
+	privateKey string,
 	entry RegistryEntry,
 ) ([]byte, error) {
+	privateKeyBytes, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return nil, errors.New("could not decode privateKey")
+	}
+
 	signature := ed25519.Sign(privateKeyBytes, hashRegistryEntry(entry))
 	publicKeyBuffer := publicKeyFromPrivateKey(privateKeyBytes)
 

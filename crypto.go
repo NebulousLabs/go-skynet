@@ -6,14 +6,14 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
-func encodeNumber(number int64) []byte {
+func encodeNumber(number uint64) []byte {
 	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, uint64(number))
+	binary.LittleEndian.PutUint64(b, number)
 	return b
 }
 
 func encodeString(toEncode string) []byte {
-	encodedNumber := encodeNumber(int64(len(toEncode)))
+	encodedNumber := encodeNumber(uint64(len(toEncode)))
 	return append(encodedNumber, []byte(toEncode)...)
 }
 
