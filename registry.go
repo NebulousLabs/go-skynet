@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// RegistryEndpoint is the registry endpoint
 	RegistryEndpoint = "/skynet/registry"
 	ed25519Algorithm = "ed25519"
 )
