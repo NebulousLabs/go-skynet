@@ -45,7 +45,11 @@ func (sc *SkynetClient) SetJson(
 			return errors.AddContext(err, "could not decode privateKey")
 		}
 
-		publicKeyBytes := publicKeyFromPrivateKey(privateKeyBytes)
+		publicKeyBytes, err := publicKeyFromPrivateKey(privateKeyBytes)
+		if err != nil {
+			return errors.AddContext(err, "could not get publicKey from privateKey")
+		}
+
 		entry, err := sc.GetEntry(hex.EncodeToString(publicKeyBytes), dataKey)
 		if err != nil {
 			return errors.AddContext(err, "could not get entry")

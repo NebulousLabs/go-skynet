@@ -207,7 +207,10 @@ func prepareSetEntryRequestBody(
 	}
 
 	signature := ed25519.Sign(privateKeyBytes, hashRegistryEntry(entry))
-	publicKeyBuffer := publicKeyFromPrivateKey(privateKeyBytes)
+	publicKeyBuffer, err := publicKeyFromPrivateKey(privateKeyBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	publicKeyBufferArray, err := intSliceFromBytes(publicKeyBuffer)
 	if err != nil {

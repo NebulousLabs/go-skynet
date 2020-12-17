@@ -1,6 +1,7 @@
 package skynet
 
 import (
+	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
 	"github.com/stretchr/testify/require"
@@ -93,6 +94,41 @@ func Test_hashDataKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hash := hashDataKey(tt.toHash)
 			require.Equal(t, tt.want, hex.EncodeToString(hash))
+		})
+	}
+}
+
+func Test_publicKeyFromPrivateKey(t *testing.T) {
+	tests := []struct {
+		name       string
+		privateKey ed25519.PrivateKey
+		want       ed25519.PublicKey
+		wantError  bool
+	}{
+		{
+			name:       "nil_private_key",
+			privateKey: nil,
+			wantError:  true,
+		},
+		{
+			name:       "invalid_private_key",
+			privateKey: ed25519.PrivateKey{22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22},
+			wantError:  true,
+		},
+		{
+			name:       "valid_private_key",
+			privateKey: ed25519.PrivateKey{22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44},
+			want:       ed25519.PublicKey{44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			publicKey, err := publicKeyFromPrivateKey(tt.privateKey)
+			if tt.wantError {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, tt.want, publicKey)
+			}
 		})
 	}
 }

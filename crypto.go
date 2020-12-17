@@ -2,6 +2,7 @@ package skynet
 
 import (
 	"encoding/binary"
+	"errors"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/ed25519"
 )
@@ -46,8 +47,13 @@ func hashRegistryEntry(s RegistryEntry) []byte {
 }
 
 // publicKeyFromPrivateKey return publicKey from privateKey.
-func publicKeyFromPrivateKey(key ed25519.PrivateKey) ed25519.PublicKey {
+func publicKeyFromPrivateKey(key ed25519.PrivateKey) (ed25519.PublicKey, error) {
+	if len(key) != 64 {
+		return nil, errors.New("invalid privateKey")
+	}
+
 	publicKey := make([]byte, 32)
 	copy(publicKey, key[32:])
-	return publicKey
+
+	return publicKey, nil
 }
