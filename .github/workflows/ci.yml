@@ -1,7 +1,10 @@
-name: PR
+name: CI
 
-# Run on PRs.
-on: [pull_request]
+# Run daily and on PRs.
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  pull_request:
 
 jobs:
   lint:
@@ -17,7 +20,7 @@ jobs:
         uses: actions/setup-python@v2
       - name: Lint script
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.27.0
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.31.0
           python -m pip install --upgrade pip
           pip install codespell
           go get -u gitlab.com/NebulousLabs/analyze
