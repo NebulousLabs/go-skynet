@@ -1,6 +1,6 @@
 # Skynet Go SDK
 
-> :warning: This repo has been archived and moved under the new [SkynetHQ](https://github.com/SkynetHQ) repo [here](https://github.com/SkynetHQ/go-skynet)
+> :warning: This repo has been archived and moved under the new [SkynetLabs](https://github.com/SkynetLabs) repo [here](https://github.com/SkynetLabs/go-skynet)
 
 [![Go](https://img.shields.io/github/go-mod/go-version/NebulousLabs/go-skynet)](https://github.com/NebulousLabs/go-skynet)
 [![Build Status](https://img.shields.io/github/workflow/status/NebulousLabs/go-skynet/PR)](https://github.com/NebulousLabs/go-skynet/actions)
