@@ -79,6 +79,7 @@ func TestWalkDirectory(t *testing.T) {
 		"testdata/file2.txt",
 		"testdata/index.html",
 		"testdata/indexhtml",
+		"testdata/jsonFile1.json",
 	}
 
 	if len(files) != len(expectedFiles) {

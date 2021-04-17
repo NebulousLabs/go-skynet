@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	numFilesInDir = 5
+	numFilesInDir = 6
 	srcDir        = "../testdata"
 	srcFile       = "../testdata/file1.txt"
 	skylink       = "XABvi7JtJbQSMAcDwnUnmp2FKDPjg8_tTTFP4BwMSxVdEg"
